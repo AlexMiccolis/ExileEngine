@@ -1,14 +1,15 @@
 # Exi::Reflect - Reflection System
+<p style="border-radius: 3px; border-bottom: 4px solid gray"></p>
 
-## Notable Files
+## <p style="border-radius: 2px; border-bottom: 2px solid gray">Notable Files</p>
 + Reflection.hpp
   + Main file for including the reflection subsystem
   + Ties together all implementation details of Exi::Reflect
 + Compiler.hpp
   + Compile-time utilities and templates
 
-## Usage
-### Classes
+## <p style="border-radius: 2px; border-bottom: 2px solid gray">Usage</p>
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Classes</p>
 Reflective Classes are defined using the `DefineClass` and `DeriveClass`
 macros that can are included with `<Exile/Reflect/Reflection.hpp>`.
 
@@ -83,7 +84,7 @@ static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
 static constexpr bool IsDerived = !std::same_as<SuperType, ClassBase>;
 ```
 
-### Class Registration
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Class Registration</p>
 
 Classes are registered in the `ClassRegistry` upon the first instance being created. 
 The `ReflectionClass` constructor checks the registration state and if the class is
@@ -91,7 +92,7 @@ not registered, it calls `ClassRegistry::RegisterClass<>`. Class registration cr
 a single constant `Class` instance within the registry for each reflective class, which
 contains runtime information such as exposed fields.
 
-### Static Constructors
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Static Constructors</p>
 
 Static constructors are a way to take control over how the reflection system
 sees a class. They provide you with a mutable reference to the `ClassRegistry`'s 
@@ -123,7 +124,7 @@ Static constructors are called in the same order as regular constructors,
 that is, `BaseClass::StaticInitialize` will be called before 
 `DerivedClass::StaticInitialize`.
 
-### Fields
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Fields</p>
 
 Field access is arguably the of the most important job of a reflection system, and
 it can be done (relatively) easily with the `Field` class.
@@ -174,7 +175,7 @@ SetOtherInt(&Derived, 1337);
 GetOtherInt(&Derived); // Returns 1337
 ```
 
-## Performance
+## <p style="border-radius: 2px; border-bottom: 2px solid gray">Performance</p>
 Performance should always be a concern, but especially in a game engine. Many
 of the repetitive calculations such a string comparison/hashing are done at
 compile time for this reason, but there's unfortunately no such thing as a 
@@ -190,11 +191,11 @@ performance-critical objects. The performance penalty of registering a class
 is in the order of 100 nanoseconds, but it depends more on the complexity of 
 the static constructor.
 
-### Registration Checking
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Registration Checking</p>
 Every time a reflection class constructor is called, it checks a static
 boolean to see if it needs to be registered. 
 
-### Static Constructors
+### <p style="border-radius: 2px; border-bottom: 2px solid gray">Static Constructors</p>
 Static constructors are only run once when the class isn't registered, so the
 only performance cost will be the cost of the static constructor function 
 itself.
