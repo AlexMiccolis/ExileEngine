@@ -60,11 +60,42 @@ bool Test_FieldGet()
     return true;
 }
 
+bool Test_FieldSet()
+{
+    DerivedTestClass Instance;
+    auto* Registry = Exi::Reflect::ClassRegistry::GetInstance();
+    auto* Class = Registry->GetClass<DerivedTestClass>();
+    auto* IntField = Class->GetField("m_MyInt");
+    auto* OtherIntField = Class->GetField("m_MyOtherInt");
+
+    if (IntField == nullptr || OtherIntField == nullptr)
+        return false;
+
+    Exi::Reflect::TypedValue myInt = IntField->Get(&Instance);
+    Exi::Reflect::TypedValue myOtherInt = OtherIntField->Get(&Instance);
+    if (myInt.Get<int>() != 1 || myOtherInt.Get<int>() != 2)
+        return false;
+
+    myInt.Set((int)0x5555);
+    myOtherInt.Set((int)0xAAAA);
+
+    IntField->Set(&Instance, myInt);
+    OtherIntField->Set(&Instance, myOtherInt);
+
+    myInt = IntField->Get(&Instance);
+    myOtherInt = OtherIntField->Get(&Instance);
+    if (myInt.Get<int>() != 0x5555 || myOtherInt.Get<int>() != 0xAAAA)
+        return false;
+
+    return true;
+}
+
 using TestFn = bool(*)();
 static const std::unordered_map<std::string, TestFn> s_TestFunctions {
     { "Benchmark", Benchmark },
     { "StaticInitialize", Test_StaticInitialize },
-    { "FieldGet", Test_FieldGet }
+    { "FieldGet", Test_FieldGet },
+    { "FieldSet", Test_FieldSet }
 };
 
 int main(int argc, const char** argv)
