@@ -94,7 +94,7 @@ public:
      * sort of dodgy.
      * @param value
      */
-    void SetValue(const void* value)
+    void SetValue(void* value)
     {
         switch (m_Type)
         {
@@ -120,15 +120,15 @@ public:
                 m_Value.float64 = *reinterpret_cast<const double*>(value);
                 break;
             case TypeString:
-                m_Value.string = *reinterpret_cast<const char* const*>(value);
+                m_Value.string = *reinterpret_cast<const char**>(value);
                 break;
             case TypeObject:
-                m_Value.object = *reinterpret_cast<const ClassBase* const*>(value);
+                m_Value.object = *reinterpret_cast<ClassBase**>(value);
                 break;
         }
     }
 
-    const void* Get() const
+    void* Get() const
     {
         return m_Value.object;
     }
@@ -146,7 +146,7 @@ private:
         float float32;
         double float64;
         const char* string;
-        const ClassBase* object;
+        ClassBase* object;
     } m_Value;
 };
 
@@ -168,4 +168,4 @@ template <> inline void TypedValue::Set(const size_t value)  { m_Value.integer =
 template <> inline void TypedValue::Set(const float& value)  { m_Value.float32 = value; }
 template <> inline void TypedValue::Set(const double& value) { m_Value.float64 = value; }
 template <> inline void TypedValue::Set(const char* value)   { m_Value.string  = value; }
-template <> inline void TypedValue::Set(const ClassBase* value) { m_Value.object  = value; }
+template <> inline void TypedValue::Set(ClassBase* value) { m_Value.object  = value; }

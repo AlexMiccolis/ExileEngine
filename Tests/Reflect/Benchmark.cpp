@@ -40,16 +40,22 @@ DefineClass(FieldClass)
 {
 public:
     FieldClass()
-        : a(1), b(2) { }
+        : m_A(1), m_B(2) { }
 
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
-        ExposeField(Class, FieldClass, a);
-        ExposeField(Class, FieldClass, b);
+        ExposeField(Class, FieldClass, m_A);
+        ExposeField(Class, FieldClass, m_B);
+        ExposeMethod(Class, FieldClass, SetA);
+    }
+
+    void SetA(int a1, int a2)
+    {
+        m_A = a1 * a2;
     }
 private:
-    int a;
-    int b;
+    int m_A;
+    int m_B;
 };
 
 class NonReflectivePODClass
@@ -121,7 +127,7 @@ BenchmarkResults Benchmark_FieldGet()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
-    auto field = fieldClass->GetField("a");
+    auto field = fieldClass->GetField("m_A");
     FieldClass cls;
 
     BENCHMARK_START(FieldGet, 65536 * 16);
@@ -148,7 +154,7 @@ BenchmarkResults Benchmark_NaiveFieldGet()
         FieldClass cls;
         auto instance = Exi::Reflect::ClassRegistry::GetInstance();
         auto fieldClass = instance->GetClass<FieldClass>();
-        auto field = fieldClass->GetField("a");
+        auto field = fieldClass->GetField("m_A");
         auto value = field->Get(&cls);
         if (value.GetType() != Exi::Reflect::TypeInt32 || value.Get<int>() != 1)
         {
@@ -164,7 +170,7 @@ BenchmarkResults Benchmark_FieldSet()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
-    auto field = fieldClass->GetField("a");
+    auto field = fieldClass->GetField("m_A");
     FieldClass cls;
 
     BENCHMARK_START(FieldGet, 65536 * 16);
@@ -177,6 +183,55 @@ BenchmarkResults Benchmark_FieldSet()
     }
 
     return BENCHMARK_END(FieldGet);
+}
+
+BenchmarkResults Benchmark_MethodInvokeUnchecked()
+{
+    auto instance = Exi::Reflect::ClassRegistry::GetInstance();
+    auto fieldClass = instance->GetClass<FieldClass>();
+    auto field = fieldClass->GetField("m_A");
+    auto method = fieldClass->GetMethod("SetA");
+    FieldClass cls;
+
+    BENCHMARK_START(MethodInvokeUnchecked, 65536 * 16);
+
+    BENCHMARK_LOOP(MethodInvokeUnchecked)
+    {
+        void* p = method->InvokeUnchecked(&cls, (int)Iteration);
+        if (field->GetValue<int>(&cls) != Iteration)
+        {
+            BENCHMARK_FAIL(MethodInvokeUnchecked);
+            break;
+        }
+    }
+
+    return BENCHMARK_END(MethodInvokeUnchecked);
+}
+
+BenchmarkResults Benchmark_MethodInvoke()
+{
+    auto instance = Exi::Reflect::ClassRegistry::GetInstance();
+    auto fieldClass = instance->GetClass<FieldClass>();
+    auto field = fieldClass->GetField("m_A");
+    auto method = fieldClass->GetMethod("SetA");
+    std::vector<Exi::Reflect::TypedValue> Parameters(2, { Exi::Reflect::TypeInt32 });
+    FieldClass cls;
+
+    BENCHMARK_START(MethodInvoke, 65536 * 16);
+
+    BENCHMARK_LOOP(MethodInvoke)
+    {
+        Parameters[0] = { Exi::Reflect::TypeInt32, Iteration };
+        Parameters[1] = { Exi::Reflect::TypeInt32, 1 };
+        Exi::Reflect::TypedValue RetVal = method->Invoke(&cls, Parameters);
+        if (field->GetValue<int>(&cls) != Iteration)
+        {
+            BENCHMARK_FAIL(MethodInvoke);
+            break;
+        }
+    }
+
+    return BENCHMARK_END(MethodInvoke);
 }
 
 bool RunBenchmark(const char* Name, BenchmarkResults(*Fn)())
@@ -203,10 +258,12 @@ bool Benchmark()
     RunBenchmark("Field Get", Benchmark_FieldGet);
     RunBenchmark("Field Set", Benchmark_FieldSet);
     RunBenchmark("Naive Field Get", Benchmark_NaiveFieldGet);
+    //RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
+    RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
 
     FieldClass Instance;
     auto Class = Exi::Reflect::ClassRegistry::GetInstance()->GetClass<FieldClass>();
-    auto Field = Class->GetField("a");
+    auto Field = Class->GetField("m_A");
 
     auto BeforeValue = Field->Get(&Instance);
     Exi::Reflect::TypedValue SetVal(Exi::Reflect::TypeInt32, 100);

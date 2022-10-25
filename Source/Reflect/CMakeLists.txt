@@ -10,3 +10,9 @@ target_sources(ExileReflect PRIVATE
         ${INCLUDE_SUBDIR}/Impl/ClassRegistry.hpp
         ClassRegistry.cpp
         )
+
+if ("${TARGET_ARCHITECTURE}" MATCHES "x86_64")
+    target_sources(ExileReflect PRIVATE Invoke.x86_64.S)
+elseif ("${TARGET_ARCHITECTURE}" MATCHES "i686")
+    target_sources(ExileReflect PRIVATE Invoke.i686.S)
+endif ()

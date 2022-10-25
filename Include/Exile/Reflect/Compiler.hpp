@@ -44,4 +44,62 @@ namespace Exi::Reflect
     concept Integer32 = (std::integral<T> && (sizeof(T) == 4));
     template <typename T>
     concept Integer64 = (std::integral<T> && (sizeof(T) == 8));
+
+    /**
+     * Helper template for getting information about a function
+     * @tparam T
+     */
+    template <class T>
+    struct FunctionTraits : FunctionTraits<decltype(&T::operator())> { };
+
+    /**
+     * FunctionTraits specialization for T = function
+     * @tparam ReturnType
+     * @tparam Args
+     */
+    template <class ReturnType, class... Args>
+    struct FunctionTraits<ReturnType(Args...)>
+    {
+        using Return = ReturnType;
+        using FnType = ReturnType(Args...);
+        static inline constexpr int ArgCount = sizeof...(Args);
+
+        template <size_t Index>
+        struct Arg {
+            using Type = typename std::tuple_element<Index, std::tuple<Args...>>::type;
+        };
+    };
+
+    /**
+     * FunctionTraits specialization for T = function pointer
+     * @tparam ReturnType
+     * @tparam Args
+     */
+    template <typename ReturnType, typename... Args>
+    struct FunctionTraits<ReturnType (*)(Args...)> : public FunctionTraits<ReturnType(Args...)> { };
+
+    /**
+     * FunctionTraits specialization for T = member function pointer
+     * @tparam Class
+     * @tparam ReturnType
+     * @tparam Args
+     */
+    template <typename Class, typename ReturnType, typename... Args>
+    struct FunctionTraits<ReturnType (Class::*)(Args...)> : public FunctionTraits<ReturnType(Args...)>
+    {
+        using Owner = Class&;
+    };
+
+    /**
+     * FunctionTraits specialization for T = const member function pointer
+     * @tparam Class
+     * @tparam ReturnType
+     * @tparam Args
+     */
+    template <typename Class, typename ReturnType, typename... Args>
+    struct FunctionTraits<ReturnType (Class::*)(Args...) const> : public FunctionTraits<ReturnType(Args...)>
+    {
+        using Owner = const Class&;
+    };
+
 }

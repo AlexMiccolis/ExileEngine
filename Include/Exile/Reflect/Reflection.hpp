@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Exile/Reflect/Compiler.hpp>
+#include <cassert>
 #include <concepts>
 #include <vector>
 
@@ -114,9 +115,6 @@ namespace Exi::Reflect
     class alignas(64) Field
     {
     public:
-        Field(FieldId Id, Type FieldType, ClassId OwnerId, std::size_t Offset, const char* Name)
-                : m_Id(Id), m_Type(FieldType), m_OwnerId(OwnerId), m_Offset(Offset), m_Name(Name) { }
-
         template <class FieldType, TemplateString Name, ReflectiveClass Owner, std::size_t Offset>
         static Field From()
         {
@@ -194,17 +192,95 @@ namespace Exi::Reflect
         }
 
     private:
+        friend class Class;
+
         FieldId m_Id;
         Type m_Type;
         ClassId m_OwnerId;
         std::size_t m_Offset;
         const char* m_Name;
 
+        Field(FieldId Id, Type FieldType, ClassId OwnerId, std::size_t Offset, const char* Name)
+            : m_Id(Id), m_Type(FieldType), m_OwnerId(OwnerId), m_Offset(Offset), m_Name(Name) { }
+
         static inline char* GetBasePointer(ClassBase* Instance)
         {
             return reinterpret_cast<char*>(Instance);
         }
 
+    };
+
+    #include <Exile/Reflect/Impl/Invoke.hpp>
+
+    /**
+     * Method data retrievable and usable at runtime.
+     */
+    class alignas(64) Method
+    {
+    public:
+        template <ReflectiveClass Owner, TemplateString Name, auto Fn>
+        static Method From()
+        {
+            using FnTraits = FunctionTraits<decltype(Fn)>;
+            return Method(
+                    Hash(Name.Data()),
+                    Name.Data(),
+                    Owner::StaticClass::Id,
+                    TypeValue<typename FnTraits::Return>::Value,
+                    (MethodFn)Fn
+                    );
+        }
+
+        /**
+         * Invoke method without checking parameter types or compatibility.
+         * Obviously a bit dangerous.
+         * @tparam Args
+         * @param Instance
+         * @param args
+         * @return
+         */
+        template <class... Args>
+        [[nodiscard]] void* InvokeUnchecked(ClassBase* Instance, Args&& ...args) const
+        {
+            assert(m_Function != nullptr);
+
+            return (Instance->*m_Function)(std::forward<Args>(args)...);
+        }
+
+        TypedValue Invoke(ClassBase* Instance, std::vector<TypedValue>& Args) const
+        {
+            TypedValue ReturnValue(m_ReturnType, 0);
+            std::vector<void*> VoidArgs;
+            for (TypedValue& Arg : Args)
+            {
+                VoidArgs.push_back(Arg.Get());
+            }
+
+            void* retPtr = InvokeArgs(Instance, m_Function, VoidArgs.data(), VoidArgs.size());
+            return ReturnValue;
+        }
+
+        [[nodiscard]] FieldId GetId() const { return m_Id; }
+        [[nodiscard]] Type  GetReturnType() const { return m_ReturnType; }
+        [[nodiscard]] ClassId GetOwnerId() const { return m_OwnerId; }
+        [[nodiscard]] const char* GetName() const { return m_Name; }
+        [[nodiscard]] const char* GetSignature() const { return m_Signature; }
+    private:
+        friend class Class;
+
+        using MethodFn = void* (ClassBase::*)(...);
+
+        MethodId m_Id;
+        ClassId m_OwnerId;
+        Type m_ReturnType;
+        const char* m_Name;
+        const char* m_Signature;
+        MethodFn m_Function;
+        std::vector<Type> m_ParameterTypes;
+
+        Method(MethodId Id, const char* Name, ClassId OwnerId, Type ReturnType, MethodFn Function)
+            : m_Id(Id), m_OwnerId(OwnerId), m_ReturnType(ReturnType),
+            m_Name(Name), m_Signature(nullptr), m_Function(Function) { }
     };
 
     /**
@@ -234,6 +310,15 @@ namespace Exi::Reflect
         }
 
         /**
+         * Expose a method to reflection
+         * @param method
+         */
+        void ExposeMethod(const Method& method)
+        {
+            m_MethodMap.emplace(method.GetId(), method);
+        }
+
+        /**
          * Get a field by name
          * @param name
          * @return Pointer to field if it exists, nullptr otherwise
@@ -242,6 +327,17 @@ namespace Exi::Reflect
         {
             auto hash = Hash(name);
             return m_FieldMap.contains(hash) ? &m_FieldMap.at(hash) : nullptr;
+        }
+
+        /**
+         * Get a method by name
+         * @param name
+         * @return Pointer to method if it exists, nullptr otherwise
+         */
+        const Method* GetMethod(const char* name) const
+        {
+            auto hash = Hash(name);
+            return m_MethodMap.contains(hash) ? &m_MethodMap.at(hash) : nullptr;
         }
 
         ClassId GetId() const { return m_Id; }
@@ -255,6 +351,7 @@ namespace Exi::Reflect
         ClassId m_SuperId;
         const char* m_Name;
         std::unordered_map<FieldId, Field> m_FieldMap;
+        std::unordered_map<MethodId, Method> m_MethodMap;
     };
 
     /**
@@ -361,4 +458,7 @@ namespace Exi::Reflect
         Owner,                   \
         Field_##Name##_Offset>();          \
     ClassRef.ExposeField(Field_##Name);
+#define ExposeMethod(ClassRef, Owner, Name) \
+    const Exi::Reflect::Method& Method_##Name = Exi::Reflect::Method::From<Owner, #Name, &Owner::Name>(); \
+    ClassRef.ExposeMethod(Method_##Name);
 
