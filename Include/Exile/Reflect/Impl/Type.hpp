@@ -57,27 +57,25 @@ template <> struct TypeMap<TypeString>  { using Type = const char*; };
 template <> struct TypeMap<TypeBoolean> { using Type = bool;        };
 
 /**
+ * Forward declaration for ClassBase
+ */
+struct alignas(sizeof(void*)) ClassBase;
+
+/**
  * Template to get Type ID from parameter type
  * @tparam T
  * @return
  */
 template <class T>
 struct TypeValue { static constexpr Type Value = TypeNull; };
-template <Integer8 T>
-struct TypeValue<T> { static constexpr Type Value = TypeInt8; };
-template <Integer16 T>
-struct TypeValue<T> { static constexpr Type Value = TypeInt16; };
-template <Integer32 T>
-struct TypeValue<T> { static constexpr Type Value = TypeInt32; };
-template <Float32 T>
-struct TypeValue<T> { static constexpr Type Value = TypeFloat; };
-template <Float64 T>
-struct TypeValue<T> { static constexpr Type Value = TypeDouble; };
 
-/**
-     * Forward declaration for ClassBase
-     */
-struct alignas(sizeof(void*)) ClassBase;
+template <Integer8 T> struct TypeValue<T> { static constexpr Type Value = TypeInt8; };
+template <Integer16 T> struct TypeValue<T> { static constexpr Type Value = TypeInt16; };
+template <Integer32 T> struct TypeValue<T> { static constexpr Type Value = TypeInt32; };
+template <Float32 T> struct TypeValue<T> { static constexpr Type Value = TypeFloat; };
+template <Float64 T> struct TypeValue<T> { static constexpr Type Value = TypeDouble; };
+template <> struct TypeValue<const char*> { static constexpr Type Value = TypeString; };
+template <> struct TypeValue<bool> { static constexpr Type Value = TypeBoolean; };
 
 /**
  * Class to contain field values and method parameters

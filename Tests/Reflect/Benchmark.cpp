@@ -1,6 +1,6 @@
 #include <Exile/Reflect/Reflection.hpp>
 #include <Exile/TL/ObjectPool.hpp>
-#include "Benchmark.hpp"
+#include <Exile/Unit/Benchmark.hpp>
 
 DefineClass(PODClass)
 {
@@ -77,7 +77,7 @@ public:
     int a;
 };
 
-BenchmarkResults Benchmark_NonReflectiveConstruction()
+Exi::Unit::BenchmarkResults Benchmark_NonReflectiveConstruction()
 {
     Exi::TL::ObjectPool<NonReflectivePODClass> objectPool;
     BENCHMARK_START(NonReflectiveConstruction, 65536 * 16);
@@ -96,7 +96,7 @@ BenchmarkResults Benchmark_NonReflectiveConstruction()
     return BENCHMARK_END(NonReflectiveConstruction);
 }
 
-BenchmarkResults Benchmark_Construction()
+Exi::Unit::BenchmarkResults Benchmark_Construction()
 {
     Exi::TL::ObjectPool<PODClass> objectPool;
     BENCHMARK_START(ObjectConstruction, 65536 * 16);
@@ -115,7 +115,7 @@ BenchmarkResults Benchmark_Construction()
     return BENCHMARK_END(ObjectConstruction);
 }
 
-BenchmarkResults Benchmark_DerivedConstruction()
+Exi::Unit::BenchmarkResults Benchmark_DerivedConstruction()
 {
     Exi::TL::ObjectPool<DerivedPODClass> objectPool;
     BENCHMARK_START(DerivedObjectConstruction, 65536 * 16);
@@ -134,7 +134,7 @@ BenchmarkResults Benchmark_DerivedConstruction()
     return BENCHMARK_END(DerivedObjectConstruction);
 }
 
-BenchmarkResults Benchmark_FieldGet()
+Exi::Unit::BenchmarkResults Benchmark_FieldGet()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
@@ -156,7 +156,7 @@ BenchmarkResults Benchmark_FieldGet()
     return BENCHMARK_END(FieldGet);
 }
 
-BenchmarkResults Benchmark_NaiveFieldGet()
+Exi::Unit::BenchmarkResults Benchmark_NaiveFieldGet()
 {
     BENCHMARK_START(NaiveFieldGet, 65536 * 16);
 
@@ -177,7 +177,7 @@ BenchmarkResults Benchmark_NaiveFieldGet()
     return BENCHMARK_END(NaiveFieldGet);
 }
 
-BenchmarkResults Benchmark_FieldSet()
+Exi::Unit::BenchmarkResults Benchmark_FieldSet()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
@@ -196,7 +196,7 @@ BenchmarkResults Benchmark_FieldSet()
     return BENCHMARK_END(FieldGet);
 }
 
-BenchmarkResults Benchmark_MethodInvokeUnchecked()
+Exi::Unit::BenchmarkResults Benchmark_MethodInvokeUnchecked()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
@@ -219,7 +219,7 @@ BenchmarkResults Benchmark_MethodInvokeUnchecked()
     return BENCHMARK_END(MethodInvokeUnchecked);
 }
 
-BenchmarkResults Benchmark_MethodInvoke()
+Exi::Unit::BenchmarkResults Benchmark_MethodInvoke()
 {
     auto instance = Exi::Reflect::ClassRegistry::GetInstance();
     auto fieldClass = instance->GetClass<FieldClass>();
@@ -246,7 +246,7 @@ BenchmarkResults Benchmark_MethodInvoke()
     return BENCHMARK_END(MethodInvoke);
 }
 
-bool RunBenchmark(const char* Name, BenchmarkResults(*Fn)())
+bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
 {
     auto Results = Fn();
     if (Results.Failed)

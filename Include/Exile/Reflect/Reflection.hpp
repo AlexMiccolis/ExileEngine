@@ -56,6 +56,16 @@ namespace Exi::Reflect
     template <class Clazz> concept DerivedClass = ReflectiveClass<Clazz> && Clazz::IsDerived;
     #pragma endregion
 
+    /**
+     * TypeValue specialization for ReflectiveClasses
+     * @tparam T
+     */
+    template <ReflectiveClass T> struct TypeValue<T>
+    {
+        static constexpr Type Value = TypeObject;
+        static constexpr ClassId Id = T::StaticClass::Id;
+    };
+
     #pragma region Static Constructors
     template <ReflectiveClass Clazz>
     struct ClassConstructors
