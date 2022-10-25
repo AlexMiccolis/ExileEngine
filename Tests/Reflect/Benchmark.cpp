@@ -49,11 +49,12 @@ public:
         ExposeMethod(Class, FieldClass, SetA);
     }
 
+private:
     void SetA(int a1, int a2)
     {
         m_A = a1 * a2;
     }
-private:
+
     int m_A;
     int m_B;
 };
@@ -214,16 +215,17 @@ BenchmarkResults Benchmark_MethodInvoke()
     auto fieldClass = instance->GetClass<FieldClass>();
     auto field = fieldClass->GetField("m_A");
     auto method = fieldClass->GetMethod("SetA");
-    std::vector<Exi::Reflect::TypedValue> Parameters(2, { Exi::Reflect::TypeInt32 });
     FieldClass cls;
 
     BENCHMARK_START(MethodInvoke, 65536 * 16);
 
     BENCHMARK_LOOP(MethodInvoke)
     {
-        Parameters[0] = { Exi::Reflect::TypeInt32, Iteration };
-        Parameters[1] = { Exi::Reflect::TypeInt32, 1 };
-        Exi::Reflect::TypedValue RetVal = method->Invoke(&cls, Parameters);
+        Exi::Reflect::TypedValue Parameters[] {
+            { Exi::Reflect::TypeInt32, Iteration },
+            { Exi::Reflect::TypeInt32, 1 }
+        };
+        Exi::Reflect::TypedValue RetVal = method->Invoke(&cls, Parameters, 2);
         if (field->GetValue<int>(&cls) != Iteration)
         {
             BENCHMARK_FAIL(MethodInvoke);

@@ -142,12 +142,16 @@ private:
     Type m_Type;
     union
     {
-        std::size_t integer;
-        float float32;
-        double float64;
-        const char* string;
-        ClassBase* object;
-    } m_Value;
+        void* m_PointerValue;
+        union
+        {
+            std::size_t integer;
+            float float32;
+            double float64;
+            const char* string;
+            ClassBase* object;
+        } m_Value;
+    };
 };
 
 template <> inline int8_t  TypedValue::Get() const { return m_Value.integer; };

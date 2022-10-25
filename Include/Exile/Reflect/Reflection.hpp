@@ -247,17 +247,16 @@ namespace Exi::Reflect
             return (Instance->*m_Function)(std::forward<Args>(args)...);
         }
 
-        TypedValue Invoke(ClassBase* Instance, std::vector<TypedValue>& Args) const
+        TypedValue Invoke(ClassBase* Instance, TypedValue* Args, std::size_t Count) const
         {
             TypedValue ReturnValue(m_ReturnType, 0);
-            std::vector<void*> VoidArgs;
-            for (TypedValue& Arg : Args)
-            {
-                VoidArgs.push_back(Arg.Get());
-            }
-
-            void* retPtr = InvokeArgs(Instance, m_Function, VoidArgs.data(), VoidArgs.size());
+            void* retPtr = InvokeArgs(Instance, m_Function, Args, Count);
             return ReturnValue;
+        }
+
+        TypedValue Invoke(ClassBase* Instance, std::vector<TypedValue>& Args) const
+        {
+            return Invoke(Instance, Args.data(), Args.size());
         }
 
         [[nodiscard]] FieldId GetId() const { return m_Id; }
