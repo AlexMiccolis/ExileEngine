@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 # Run assembler files through the C++ Compiler
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-offsetof")
 endif()
 
 function (get_architecture)

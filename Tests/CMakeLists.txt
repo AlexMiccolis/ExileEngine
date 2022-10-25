@@ -2,4 +2,5 @@ add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp Reflect/Benchm
 target_link_libraries(ReflectTest ExileReflect)
 
 add_test(NAME "StaticInitialize"   COMMAND ReflectTest StaticInitialize)
+add_test(NAME "Field Get"          COMMAND ReflectTest FieldGet)
 add_test(NAME "Benchmark"          COMMAND ReflectTest Benchmark)

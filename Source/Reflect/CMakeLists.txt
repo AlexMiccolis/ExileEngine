@@ -7,8 +7,10 @@ target_sources(ExileReflect PUBLIC
         )
 target_sources(ExileReflect PRIVATE
         ${INCLUDE_SUBDIR}/Impl/Type.hpp
+        ${INCLUDE_SUBDIR}/Impl/Invoke.hpp
         ${INCLUDE_SUBDIR}/Impl/ClassRegistry.hpp
         ClassRegistry.cpp
+        Class.cpp
         )
 
 if ("${TARGET_ARCHITECTURE}" MATCHES "x86_64")

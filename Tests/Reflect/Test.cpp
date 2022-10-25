@@ -14,9 +14,12 @@ DefineClass(TestClass)
 public:
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
+        ExposeField(Class, TestClass, m_MyInt);
         TestClass_Static = true;
         puts("TestClass::StaticInitialize()");
     }
+
+    int m_MyInt = 1;
 };
 
 DeriveClass(DerivedTestClass, TestClass)
@@ -24,9 +27,12 @@ DeriveClass(DerivedTestClass, TestClass)
 public:
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
+        ExposeField(Class, DerivedTestClass, m_MyOtherInt);
         DerivedTestClass_Static = true;
         puts("DerivedTestClass::StaticInitialize()");
     }
+
+    int m_MyOtherInt = 2;
 };
 
 bool Test_StaticInitialize()
@@ -35,10 +41,30 @@ bool Test_StaticInitialize()
     return TestClass_Static && DerivedTestClass_Static;
 }
 
+bool Test_FieldGet()
+{
+    DerivedTestClass Instance;
+    auto* Registry = Exi::Reflect::ClassRegistry::GetInstance();
+    auto* Class = Registry->GetClass<DerivedTestClass>();
+    auto* IntField = Class->GetField("m_MyInt");
+    auto* OtherIntField = Class->GetField("m_MyOtherInt");
+
+    if (IntField == nullptr || OtherIntField == nullptr)
+        return false;
+
+    Exi::Reflect::TypedValue myInt = IntField->Get(&Instance);
+    Exi::Reflect::TypedValue myOtherInt = OtherIntField->Get(&Instance);
+    if (myInt.Get<int>() != 1 || myOtherInt.Get<int>() != 2)
+        return false;
+
+    return true;
+}
+
 using TestFn = bool(*)();
 static const std::unordered_map<std::string, TestFn> s_TestFunctions {
     { "Benchmark", Benchmark },
-    { "StaticInitialize", Test_StaticInitialize }
+    { "StaticInitialize", Test_StaticInitialize },
+    { "FieldGet", Test_FieldGet }
 };
 
 int main(int argc, const char** argv)

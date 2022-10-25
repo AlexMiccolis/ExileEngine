@@ -14,7 +14,7 @@ namespace Exi::Reflect
      *
      * Specialization for Base classes.
      */
-    template <class ClassType, TemplateString ClassName, ClassId ClsId, class SuperClassType = ClassBase>
+    template <class ClassType, TemplateString ClassName, ClassId ClsId, class SuperClassType>
     struct StaticClass
     {
         /* Declaration type of this class */
@@ -30,17 +30,17 @@ namespace Exi::Reflect
         static constexpr ClassId Id = ClsId;
 
         /* ID of this class's super class */
-        static constexpr ClassId SuperId = 0;
+        static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
 
         /* Whether this class was derived from another class */
-        static constexpr bool IsDerived = false;
+        static constexpr bool IsDerived = !std::same_as<ClassType, SuperClassType>;
     };
 
     /**
      * Class that all reflection classes are derived from.
      * All classes are aligned to 4 or 8 bytes depending on the native pointer size.
      */
-    struct alignas(sizeof(void*)) ClassBase { };
+    struct alignas(sizeof(void*)) ClassBase { using StaticClass = StaticClass<ClassBase, "ClassBase", 0, ClassBase>; };
 
     #pragma region Class Concepts
     /**
@@ -314,14 +314,30 @@ namespace Exi::Reflect
         }
 
         /**
+         * Get a field by ID
+         * @param name
+         * @return Pointer to field if it exists, nullptr otherwise
+         */
+        const Field* GetField(FieldId id) const
+        {
+            return m_FieldMap.contains(id) ? &m_FieldMap.at(id) : GetInheritedField(id);
+        }
+
+        /**
          * Get a field by name
          * @param name
          * @return Pointer to field if it exists, nullptr otherwise
          */
-        const Field* GetField(const char* name) const
+        const Field* GetField(const char* name) const { return GetField(Hash(name)); }
+
+        /**
+         * Get a method by ID
+         * @param name
+         * @return Pointer to method if it exists, nullptr otherwise
+         */
+        const Method* GetMethod(MethodId id) const
         {
-            auto hash = Hash(name);
-            return m_FieldMap.contains(hash) ? &m_FieldMap.at(hash) : nullptr;
+            return m_MethodMap.contains(id) ? &m_MethodMap.at(id) : GetInheritedMethod(id);
         }
 
         /**
@@ -329,11 +345,7 @@ namespace Exi::Reflect
          * @param name
          * @return Pointer to method if it exists, nullptr otherwise
          */
-        const Method* GetMethod(const char* name) const
-        {
-            auto hash = Hash(name);
-            return m_MethodMap.contains(hash) ? &m_MethodMap.at(hash) : nullptr;
-        }
+        const Method* GetMethod(const char* name) const { return GetMethod(Hash(name)); }
 
         ClassId GetId() const { return m_Id; }
         ClassId GetSuperId() const { return m_SuperId; }
@@ -341,6 +353,9 @@ namespace Exi::Reflect
     private:
         Class(ClassId Id, ClassId SuperId, const char* Name)
                 : m_Id(Id), m_SuperId(SuperId), m_Name(Name) { }
+
+        const Field* GetInheritedField(FieldId id) const;
+        const Method* GetInheritedMethod(MethodId id) const;
 
         ClassId m_Id;
         ClassId m_SuperId;
@@ -357,31 +372,6 @@ namespace Exi::Reflect
     static inline void TryRegisterClass();
 
     /**
-     * Static reflection information
-     */
-    template <DerivedClass ClassType, TemplateString ClassName, ClassId ClsId, class SuperClassType>
-    struct StaticClass<ClassType, ClassName, ClsId, SuperClassType>
-    {
-        /* Declaration type of this class */
-        using Type = ClassType;
-
-        /* Super type of this class */
-        using SuperType = SuperClassType;
-
-        /* Name of this class type as seen in source code */
-        static constexpr const char* Name = ClassName.Data();
-
-        /* ID of this class */
-        static constexpr ClassId Id = ClsId;
-
-        /* ID of this class's super class */
-        static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
-
-        /* Whether this class was derived from another class */
-        static constexpr bool IsDerived = !std::same_as<SuperType, ClassBase>;
-    };
-
-    /**
      * Runtime reflection information
      * @tparam ClassType Class declaration type
      * @tparam ClassName Class name
@@ -390,7 +380,7 @@ namespace Exi::Reflect
     struct ReflectionClass : public SuperType
     {
         #pragma region Compile-time Definitions
-        using StaticClass = StaticClass<ClassType, ClassName, ClsId, SuperType>;
+        using StaticClass = Reflect::StaticClass<ClassType, ClassName, ClsId, SuperType>;
 
         using Self  = ClassType;
         using Super = SuperType;
@@ -412,7 +402,7 @@ namespace Exi::Reflect
     struct ReflectionClass<ClassType, ClassName, ClassBase, ClsId> : public ClassBase
     {
         #pragma region Compile-time Definitions
-        using StaticClass = StaticClass<ClassType, ClassName, ClsId, ClassBase>;
+        using StaticClass = Reflect::StaticClass<ClassType, ClassName, ClsId, ClassBase>;
 
         using Self  = ClassType;
         using Super = ClassBase;
