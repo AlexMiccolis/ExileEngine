@@ -45,6 +45,11 @@ namespace Exi::Reflect
     template <typename T>
     concept Integer64 = (std::integral<T> && (sizeof(T) == 8));
 
+    template <typename T>
+    concept Float32 = (std::floating_point<T> && (sizeof(T) == 4));
+    template <typename T>
+    concept Float64 = (std::floating_point<T> && (sizeof(T) == 8));
+
     /**
      * Helper template for getting information about a function
      * @tparam T
@@ -62,6 +67,7 @@ namespace Exi::Reflect
     {
         using Return = ReturnType;
         using FnType = ReturnType(Args...);
+        using Arguments = std::tuple<Args...>;
         static inline constexpr int ArgCount = sizeof...(Args);
 
         template <size_t Index>

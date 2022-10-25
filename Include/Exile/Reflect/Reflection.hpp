@@ -226,8 +226,7 @@ namespace Exi::Reflect
                     Hash(Name.Data()),
                     Name.Data(),
                     Owner::StaticClass::Id,
-                    TypeValue<typename FnTraits::Return>::Value,
-                    (MethodFn)Fn
+                    RuntimeFunction::From<Fn>()
                     );
         }
 
@@ -242,25 +241,20 @@ namespace Exi::Reflect
         template <class... Args>
         [[nodiscard]] void* InvokeUnchecked(ClassBase* Instance, Args&& ...args) const
         {
-            assert(m_Function != nullptr);
-
-            return (Instance->*m_Function)(std::forward<Args>(args)...);
+            return (Instance->*m_Function.GetFunction())(std::forward<Args>(args)...);
         }
 
         TypedValue Invoke(ClassBase* Instance, TypedValue* Args, std::size_t Count) const
         {
-            TypedValue ReturnValue(m_ReturnType, 0);
-            void* retPtr = InvokeArgs(Instance, m_Function, Args, Count);
-            return ReturnValue;
+            return m_Function.Invoke(Instance, Args, Count);
         }
 
         TypedValue Invoke(ClassBase* Instance, std::vector<TypedValue>& Args) const
         {
-            return Invoke(Instance, Args.data(), Args.size());
+            return m_Function.Invoke(Instance, Args.data(), Args.size());
         }
 
         [[nodiscard]] FieldId GetId() const { return m_Id; }
-        [[nodiscard]] Type  GetReturnType() const { return m_ReturnType; }
         [[nodiscard]] ClassId GetOwnerId() const { return m_OwnerId; }
         [[nodiscard]] const char* GetName() const { return m_Name; }
         [[nodiscard]] const char* GetSignature() const { return m_Signature; }
@@ -271,15 +265,17 @@ namespace Exi::Reflect
 
         MethodId m_Id;
         ClassId m_OwnerId;
-        Type m_ReturnType;
         const char* m_Name;
         const char* m_Signature;
-        MethodFn m_Function;
-        std::vector<Type> m_ParameterTypes;
+        RuntimeFunction m_Function;
 
-        Method(MethodId Id, const char* Name, ClassId OwnerId, Type ReturnType, MethodFn Function)
-            : m_Id(Id), m_OwnerId(OwnerId), m_ReturnType(ReturnType),
-            m_Name(Name), m_Signature(nullptr), m_Function(Function) { }
+        Method(MethodId Id, const char* Name, ClassId OwnerId,
+               RuntimeFunction&& Fn)
+            : m_Id(Id), m_OwnerId(OwnerId), m_Name(Name), m_Signature(nullptr),
+              m_Function(std::move(Fn))
+        {
+
+        }
     };
 
     /**

@@ -69,6 +69,10 @@ template <Integer16 T>
 struct TypeValue<T> { static constexpr Type Value = TypeInt16; };
 template <Integer32 T>
 struct TypeValue<T> { static constexpr Type Value = TypeInt32; };
+template <Float32 T>
+struct TypeValue<T> { static constexpr Type Value = TypeFloat; };
+template <Float64 T>
+struct TypeValue<T> { static constexpr Type Value = TypeDouble; };
 
 /**
      * Forward declaration for ClassBase
@@ -90,7 +94,7 @@ public:
     Type GetType() const { return m_Type; }
 
     /**
-     * Load the value from an opaque pointer based on the type,
+     * Load the value from a void pointer based on the type,
      * sort of dodgy.
      * @param value
      */

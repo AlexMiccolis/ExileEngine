@@ -47,6 +47,8 @@ public:
         ExposeField(Class, FieldClass, m_A);
         ExposeField(Class, FieldClass, m_B);
         ExposeMethod(Class, FieldClass, SetA);
+        ExposeMethod(Class, FieldClass, SetAB);
+        ExposeMethod(Class, FieldClass, GetA);
     }
 
 private:
@@ -54,6 +56,14 @@ private:
     {
         m_A = a1 * a2;
     }
+
+    void SetAB(float a, float b)
+    {
+        m_A = a;
+        m_B = b;
+    }
+
+    int GetA() const { return m_A; }
 
     int m_A;
     int m_B;
@@ -198,7 +208,7 @@ BenchmarkResults Benchmark_MethodInvokeUnchecked()
 
     BENCHMARK_LOOP(MethodInvokeUnchecked)
     {
-        void* p = method->InvokeUnchecked(&cls, (int)Iteration);
+        void* p = method->InvokeUnchecked(&cls, (int)Iteration, (int)1);
         if (field->GetValue<int>(&cls) != Iteration)
         {
             BENCHMARK_FAIL(MethodInvokeUnchecked);
@@ -260,18 +270,8 @@ bool Benchmark()
     RunBenchmark("Field Get", Benchmark_FieldGet);
     RunBenchmark("Field Set", Benchmark_FieldSet);
     RunBenchmark("Naive Field Get", Benchmark_NaiveFieldGet);
-    //RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
+    RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
     RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
 
-    FieldClass Instance;
-    auto Class = Exi::Reflect::ClassRegistry::GetInstance()->GetClass<FieldClass>();
-    auto Field = Class->GetField("m_A");
-
-    auto BeforeValue = Field->Get(&Instance);
-    Exi::Reflect::TypedValue SetVal(Exi::Reflect::TypeInt32, 100);
-    Field->Set(&Instance, SetVal);
-    auto AfterValue = Field->Get(&Instance);
-
-    printf("%d %d\n", BeforeValue.Get<int>(), AfterValue.Get<int>());
     return true;
 }
