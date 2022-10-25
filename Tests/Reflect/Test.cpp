@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <Exile/Unit/Test.hpp>
 #include <Exile/Reflect/Reflection.hpp>
 
 extern bool Benchmark();
@@ -90,32 +91,14 @@ bool Test_FieldSet()
     return true;
 }
 
-using TestFn = bool(*)();
-static const std::unordered_map<std::string, TestFn> s_TestFunctions {
-    { "Benchmark", Benchmark },
-    { "StaticInitialize", Test_StaticInitialize },
-    { "FieldGet", Test_FieldGet },
-    { "FieldSet", Test_FieldSet }
-};
-
 int main(int argc, const char** argv)
 {
-    std::vector<std::string> args(&argv[0], &argv[argc]);
+    const Exi::Unit::Tests tests ({
+        { "Benchmark", Benchmark },
+        { "StaticInitialize", Test_StaticInitialize },
+        { "FieldGet", Test_FieldGet },
+        { "FieldSet", Test_FieldSet }
+    });
 
-    if (argc < 2)
-    {
-        puts("ERROR: Test name not specified, available tests:");
-        for (const auto& pair : s_TestFunctions)
-            printf("    %s\n", pair.first.c_str());
-        return 1;
-    }
-
-    const std::string& testName = args[1];
-    if (s_TestFunctions.contains(testName))
-    {
-        TestFn fn = s_TestFunctions.at(testName);
-        return fn ? !fn() : 1;
-    }
-    printf("ERROR: Unknown test name '%s'\n", testName.c_str());
-    return 1;
+    return tests.Execute(argc, argv);
 }
