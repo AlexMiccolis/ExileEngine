@@ -1,4 +1,5 @@
 # <p align="center">Exile Engine</p>
+[![CMake](https://github.com/AlexMiccolis/ExileEngine/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/AlexMiccolis/ExileEngine/actions/workflows/cmake.yml)
 <p style="border-radius: 3px; border-bottom: 4px solid gray"></p>
 
 ## <p style="border-radius: 3px; border-bottom: 2px solid gray">About</p>
