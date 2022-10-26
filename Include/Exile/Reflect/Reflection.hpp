@@ -364,6 +364,25 @@ namespace Exi::Reflect
          */
         const Method* GetMethod(const char* name) const { return GetMethod(Hash(name)); }
 
+        /**
+         * Retrieve all class fields and write them into an array
+         * @param fields Fields array
+         * @param maxFields Size of fields array
+         * @return Fields count
+         */
+        std::size_t GetFields(Field const** fields, std::size_t maxFields) const;
+
+        /**
+         * Retrieve all class methods and write them into an array
+         * @param methods Methods array
+         * @param maxMethods Size of methods array
+         * @return Method count
+         */
+        std::size_t GetMethods(Method const** methods, std::size_t maxMethods) const;
+
+        std::size_t GetFieldCount() const { return m_FieldMap.size(); }
+        std::size_t GetMethodCount() const { return m_MethodMap.size(); }
+
         ClassId GetId() const { return m_Id; }
         ClassId GetSuperId() const { return m_SuperId; }
         const char* GetName() const { return m_Name; }
