@@ -1,3 +1,9 @@
+add_executable(TLTest TL/Test.cpp TL/Benchmark.cpp)
+target_include_directories(TLTest PUBLIC ${PROJECT_SOURCE_DIR}/Include)
+
+add_test(NAME "NumericMap::Find"           COMMAND TLTest NumericMap_Find)
+add_test(NAME "Template Library Benchmark" COMMAND TLTest Benchmark)
+
 add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp)
 target_link_libraries(ReflectTest ExileReflect)
 
