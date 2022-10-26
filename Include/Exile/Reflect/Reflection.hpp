@@ -14,11 +14,11 @@ namespace Exi::Reflect
      *
      * Specialization for Base classes.
      */
-    template <class ClassType, TemplateString ClassName, ClassId ClsId, class SuperClassType>
+    template <class Cls, TemplateString ClassName, ClassId ClsId, class SuperClassType>
     struct StaticClass
     {
         /* Declaration type of this class */
-        using Class = ClassType;
+        using Class = Cls;
 
         /* Super type of this class */
         using Super = SuperClassType;
@@ -30,13 +30,13 @@ namespace Exi::Reflect
         static constexpr ClassId Id = ClsId;
 
         /* Type of this class */
-        static constexpr Type Type = (enum Type)ClsId;
+        static constexpr Type ClassType = (enum Type)ClsId;
 
         /* ID of this class's super class */
         static constexpr ClassId SuperId = SuperClassType::Static::Id;
 
         /* Whether this class was derived from another class */
-        static constexpr bool IsDerived = !std::same_as<ClassType, SuperClassType>;
+        static constexpr bool IsDerived = !std::same_as<Class, SuperClassType>;
     };
 
     /**
@@ -136,7 +136,7 @@ namespace Exi::Reflect
                     std::derived_from<typename PtrTraits::ValueType, ClassBase>)
             {
                 TryRegisterClass<typename PtrTraits::ValueType>();
-                return Field(Id, PtrTraits::ValueType::Static::Type, Owner::Static::Id, Offset, Name.Data());
+                return Field(Id, PtrTraits::ValueType::Static::ClassType, Owner::Static::Id, Offset, Name.Data());
             }
             else
             {
