@@ -1,15 +1,15 @@
 # Exi::Reflect - Reflection System
 <p style="border-radius: 3px; border-bottom: 4px solid gray"></p>
 
-## <p style="border-radius: 2px; border-bottom: 2px solid gray">Notable Files</p>
+## <p style="border-radius: 2px; border-bottom: 3px solid gray">Notable Files</p>
 + Reflection.hpp
   + Main file for including the reflection subsystem
   + Ties together all implementation details of Exi::Reflect
 + Compiler.hpp
   + Compile-time utilities and templates
 
-## <p style="border-radius: 2px; border-bottom: 2px solid gray">Usage</p>
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Classes</p>
+## <p style="border-radius: 2px; border-bottom: 3px solid gray">Usage</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Classes</p>
 Reflective Classes are defined using the `DefineClass` and `DeriveClass`
 macros that can are included with `<Exile/Reflect/Reflection.hpp>`.
 
@@ -53,7 +53,7 @@ are provided by `ReflectionClass`:
 
 ```c++
 // Static compile-time type information
-using StaticClass = StaticClass<ClassType, ClassName, ClsId, SuperType>;
+using Static = StaticClass<ClassType, ClassName, ClsId, SuperType>;
 
 // The type of the current class
 using Self  = ClassType;
@@ -62,7 +62,7 @@ using Self  = ClassType;
 using Super = SuperType;
 ```
 
-And within `StaticClass` is:
+And within `Static` is:
 
 ```c++
 /* Declaration type of this class */
@@ -78,13 +78,13 @@ static constexpr const char* Name = ClassName.Data();
 static constexpr ClassId Id = ClsId;
 
 /* ID of this class's super class */
-static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
+static constexpr ClassId SuperId = SuperClassType::Static::Id;
 
 /* Whether this class was derived from another class */
 static constexpr bool IsDerived = !std::same_as<SuperType, ClassBase>;
 ```
 
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Class Registration</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Class Registration</p>
 
 Classes are registered in the `ClassRegistry` upon the first instance being created. 
 The `ReflectionClass` constructor checks the registration state and if the class is
@@ -92,7 +92,7 @@ not registered, it calls `ClassRegistry::RegisterClass<>`. Class registration cr
 a single constant `Class` instance within the registry for each reflective class, which
 contains runtime information such as exposed fields.
 
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Static Constructors</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Static Constructors</p>
 
 Static constructors are a way to take control over how the reflection system
 sees a class. They provide you with a mutable reference to the `ClassRegistry`'s 
@@ -111,7 +111,7 @@ public:
     {
         // This macro creates variables, so it's important
         // to be careful where you put it
-        ExposeField(Class, MyDerivedClass, m_MyOtherInt);
+        ExposeField(Class, m_MyOtherInt);
     }
 private:
     int m_MyOtherInt;
@@ -124,10 +124,9 @@ Static constructors are called in the same order as regular constructors,
 that is, `BaseClass::StaticInitialize` will be called before 
 `DerivedClass::StaticInitialize`.
 
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Fields</p>
-
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Fields</p>
 Field access is arguably the of the most important job of a reflection system, and
-it can be done (relatively) easily with the `Field` class.
+it can be done with the `Field` class.
 
 ```c++
 void SetOtherInt(MyDerivedClass* Instance, int OtherInt)
@@ -145,7 +144,7 @@ void SetOtherInt(MyDerivedClass* Instance, int OtherInt)
     Exi::Reflect::TypedValue Value(Exi::Reflect::TypeInt32, OtherInt);
     
     // Write the value to the instance's m_MyOtherInt field
-    Field->Set(&Instance, SetVal);
+    Field->Set(Instance, SetVal);
 }
 
 int GetOtherInt(MyDerivedClass* Instance)
@@ -155,7 +154,7 @@ int GetOtherInt(MyDerivedClass* Instance)
     auto Field = Class->GetField("m_MyOtherInt");
     
     // Get a TypedValue from the Field
-    auto Value = Field->Get(&Instance);
+    auto Value = Field->Get(Instance);
     
     // Read the TypedValue as an int
     return Value.Get<int>();
@@ -175,7 +174,57 @@ SetOtherInt(&Derived, 1337);
 GetOtherInt(&Derived); // Returns 1337
 ```
 
-## <p style="border-radius: 2px; border-bottom: 2px solid gray">Performance</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Methods</p>
+Class methods are accessed in a similar way to fields. First, you retrieve the
+class information from the registry. Then, you call `Class::GetMethod` with a 
+name or method ID. This returns a reference to a method object which can be
+invoked using a class instance. Methods are exposed using the ExposeMethod
+macro.
+
+```c++
+DeriveClass(MyDerivedClass, MyClass)
+{
+public:
+    MyDerivedClass() : m_MyOtherInt(2) { }
+    
+    static void StaticInitialize(Exi::Reflect::Class& Class)
+    {
+        // This macro creates variables, so it's important
+        // to be careful where you put it
+        ExposeMethod(Class, MyDerivedClass, SetOtherInt);
+    }
+    
+private:
+    void SetOtherInt(int a)
+    {
+        m_MyOtherInt = a;
+    }
+    
+    int m_MyOtherInt;
+}
+```
+
+`ExposeMethod` can be used on public, protected, or private member functions.
+Invoking a method on an instance is similar to reading or writing a field.
+
+```c++
+MyDerivedClass Derived;
+
+auto Registry = Exi::Reflect::ClassRegistry::GetInstance();
+auto Class = Registry->GetClass<MyDerivedClass>();
+auto Method = Class->GetMethod("SetOtherInt");
+
+// In order to perform a checked invocation, you must pass
+// parameters via an array of TypedValues
+Exi::Reflect::TypedValue Parameters[] {
+    { Exi::Reflect::TypeInt32, 1337 } // 'a' parameter for SetOtherInt
+};
+
+// Invoke the method and collect the return value
+Exi::Reflect::TypedValue RetVal = method->Invoke(&cls, Parameters, 1);
+```
+
+## <p style="border-radius: 2px; border-bottom: 3px solid gray">Performance</p>
 Performance should always be a concern, but especially in a game engine. Many
 of the repetitive calculations such a string comparison/hashing are done at
 compile time for this reason, but there's unfortunately no such thing as a 
@@ -191,11 +240,20 @@ performance-critical objects. The performance penalty of registering a class
 is in the order of 100 nanoseconds, but it depends more on the complexity of 
 the static constructor.
 
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Registration Checking</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Compile Time</p>
+Since the reflection system consists mainly of templates, there is a very high
+compile-time cost. If a class does not need to interact with the reflection
+system, do not make it a reflection class.
+
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Registration Checking</p>
 Every time a reflection class constructor is called, it checks a static
 boolean to see if it needs to be registered. 
 
-### <p style="border-radius: 2px; border-bottom: 2px solid gray">Static Constructors</p>
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Static Constructors</p>
 Static constructors are only run once when the class isn't registered, so the
 only performance cost will be the cost of the static constructor function 
 itself.
+
+### <p style="border-radius: 2px; border-bottom: 3px solid gray">Method Invocations</p>
+A method invocation consists of an O(n) argument type check and an indirect call to the
+target method. 
