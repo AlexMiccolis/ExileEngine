@@ -4,6 +4,8 @@
 #include <Exile/ECS/Component.hpp>
 #include <Exile/ECS/Entity.hpp>
 
+extern bool Benchmark();
+
 DefineComponent(PositionComponent)
 {
 public:
@@ -32,13 +34,35 @@ bool Test_ComponentConstruction()
     auto Class = Registry->GetClass<PositionComponent>();
     auto Field = Class->GetField("m_Entity");
 
-    return Field->GetType() == Exi::ECS::Entity::StaticClass::Id;
+    return Field->GetType() == Exi::ECS::Entity::Static::Id;
+}
+
+bool Test_EntityConstruction()
+{
+    Exi::ECS::Entity entity;
+    entity.AttachComponent(std::make_unique<PositionComponent>());
+    return true;
+}
+
+bool Test_EntityComponentSearch()
+{
+    Exi::ECS::Entity entity;
+    entity.AttachComponent(std::make_unique<PositionComponent>());
+    entity.AttachComponent(std::make_unique<PositionComponent>());
+
+    std::vector<PositionComponent*> positionComponents;
+    int count = entity.GetComponentsOfType<PositionComponent>(positionComponents);
+
+    return count == 2;
 }
 
 int main(int argc, const char** argv)
 {
     const Exi::Unit::Tests tests({
-        { "ComponentConstruction", Test_ComponentConstruction }
+        { "Benchmark", Benchmark },
+        { "ComponentConstruction", Test_ComponentConstruction },
+        { "EntityConstruction", Test_EntityConstruction },
+        { "EntityComponentSearch", Test_EntityComponentSearch }
     });
 
     return tests.Execute(argc, argv);

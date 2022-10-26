@@ -5,13 +5,14 @@ namespace Exi::ECS
 {
 
     Component::Component()
+        : m_Entity(nullptr)
     {
 
     }
 
-    void Component::AttachTo(class Entity& entity)
+    void Component::OnAttached(Entity& entity)
     {
-
+        m_Entity = &entity;
     }
 
     void Component::StaticInitialize(Reflect::Class& Class)

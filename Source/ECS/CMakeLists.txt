@@ -6,5 +6,7 @@ target_sources(ExileECS PUBLIC
         )
 target_sources(ExileECS PRIVATE
         ${INCLUDE_SUBDIR}/Component.hpp
+        Entity.cpp
         Component.cpp
+        System.cpp
         )

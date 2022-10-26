@@ -11,7 +11,7 @@ namespace Exi::ECS
     public:
         Component();
 
-        void AttachTo(Entity& entity);
+        virtual void OnAttached(class Entity& entity);
 
         static void StaticInitialize(Reflect::Class& Class);
     private:
