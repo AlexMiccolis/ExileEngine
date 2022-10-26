@@ -21,7 +21,7 @@ namespace Exi::Reflect
         using Class = ClassType;
 
         /* Super type of this class */
-        using SuperType = SuperClassType;
+        using Super = SuperClassType;
 
         /* Name of this class type as seen in source code */
         static constexpr const char* Name = ClassName.Data();
@@ -33,7 +33,7 @@ namespace Exi::Reflect
         static constexpr Type Type = (enum Type)ClsId;
 
         /* ID of this class's super class */
-        static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
+        static constexpr ClassId SuperId = SuperClassType::Static::Id;
 
         /* Whether this class was derived from another class */
         static constexpr bool IsDerived = !std::same_as<ClassType, SuperClassType>;
@@ -43,7 +43,7 @@ namespace Exi::Reflect
      * Class that all reflection classes are derived from.
      * All classes are aligned to 4 or 8 bytes depending on the native pointer size.
      */
-    struct alignas(sizeof(void*)) ClassBase { using StaticClass = StaticClass<ClassBase, "ClassBase", 0, ClassBase>; };
+    struct alignas(sizeof(void*)) ClassBase { using Static = StaticClass<ClassBase, "ClassBase", 0, ClassBase>; };
 
     #pragma region Class Concepts
     /**
@@ -136,11 +136,11 @@ namespace Exi::Reflect
                     std::derived_from<typename PtrTraits::ValueType, ClassBase>)
             {
                 TryRegisterClass<typename PtrTraits::ValueType>();
-                return Field(Id, PtrTraits::ValueType::StaticClass::Type, Owner::StaticClass::Id, Offset, Name.Data());
+                return Field(Id, PtrTraits::ValueType::Static::Type, Owner::Static::Id, Offset, Name.Data());
             }
             else
             {
-                return Field(Id, TypeValue<FieldType>::Value, Owner::StaticClass::Id, Offset, Name.Data());
+                return Field(Id, TypeValue<FieldType>::Value, Owner::Static::Id, Offset, Name.Data());
             }
         }
 
@@ -242,7 +242,7 @@ namespace Exi::Reflect
             return Method(
                     Hash(Name.Data()),
                     Name.Data(),
-                    Owner::StaticClass::Id,
+                    Owner::Static::Id,
                     RuntimeFunction::From<Fn>()
                     );
         }
@@ -306,9 +306,9 @@ namespace Exi::Reflect
         template <ReflectiveClass Clazz>
         static Class& FromStaticClass()
         {
-            static Class clazz(Clazz::StaticClass::Id,
-                               Clazz::StaticClass::SuperId,
-                               Clazz::StaticClass::Name);
+            static Class clazz(Clazz::Static::Id,
+                               Clazz::Static::SuperId,
+                               Clazz::Static::Name);
             return clazz;
         }
 
@@ -390,7 +390,7 @@ namespace Exi::Reflect
     struct ReflectionClass : public SuperType
     {
         #pragma region Compile-time Definitions
-        using StaticClass = Reflect::StaticClass<ClassType, ClassName, ClsId, SuperType>;
+        using Static = Reflect::StaticClass<ClassType, ClassName, ClsId, SuperType>;
 
         using Self  = ClassType;
         using Super = SuperType;
@@ -412,7 +412,7 @@ namespace Exi::Reflect
     struct ReflectionClass<ClassType, ClassName, ClassBase, ClsId> : public ClassBase
     {
         #pragma region Compile-time Definitions
-        using StaticClass = Reflect::StaticClass<ClassType, ClassName, ClsId, ClassBase>;
+        using Static = Reflect::StaticClass<ClassType, ClassName, ClsId, ClassBase>;
 
         using Self  = ClassType;
         using Super = ClassBase;

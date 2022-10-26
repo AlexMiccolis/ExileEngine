@@ -16,7 +16,7 @@ public:
     template <ReflectiveClass Clazz>
     void RegisterClass()
     {
-        constexpr size_t id = Clazz::StaticClass::Id;
+        constexpr size_t id = Clazz::Static::Id;
         if (IsClassRegistered(id))
             return;
 
@@ -55,7 +55,7 @@ public:
     {
         if (!Clazz::IsRegistered)
             RegisterClass<Clazz>();
-        return GetClass(Clazz::StaticClass::Id);
+        return GetClass(Clazz::Static::Id);
     }
 
     /**
