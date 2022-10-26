@@ -185,6 +185,45 @@ namespace Exi::TL
 
             return i;
         }
+
+        /**
+         * Retrieve all keys in the map and copy them into an array.
+         * Will write no more than `maxKeys` keys into `keys`.
+         * @param keys Pointer to array of keys
+         * @param maxKeys Size of key array
+         * @return Number of keys present in map
+         */
+        std::size_t GetKeys(Key* keys, std::size_t maxKeys) const
+        {
+            std::size_t count = 0;
+            for (int c = 0; c < Columns; c++)
+            {
+                auto* colPtr = m_BucketColumns[c];
+
+                if (!colPtr)
+                    continue;
+
+                for (int r = 0; r < Rows; r++)
+                {
+                    RowHead& row = (*colPtr)[r];
+                    KeyNode* keyNode = row.keyNode;
+                    while (keyNode != nullptr)
+                    {
+                        if (count < maxKeys)
+                            keys[count] = keyNode->key;
+                        keyNode = keyNode->next;
+                        ++count;
+                    }
+                }
+            }
+            return count;
+        }
+
+        /**
+         * Get the number of keys in the map
+         * @return Key count
+         */
+        [[nodiscard]] std::size_t GetKeys() const { return GetKeys(nullptr, 0); }
     private:
         /**
          * Insert an empty node for the given key

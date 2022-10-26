@@ -28,6 +28,31 @@ Exi::Unit::BenchmarkResults Benchmark_NumericMap_Find()
     return BENCHMARK_END(NumericMap_Find);
 }
 
+Exi::Unit::BenchmarkResults Benchmark_NumericMap_GetKeys()
+{
+    constexpr std::size_t count = 8;
+    Exi::TL::NumericMap<std::size_t, int> map;
+
+    for (auto i = 0; i < count; i++)
+    {
+        map.Emplace(0, i);
+        map.Emplace(1, i);
+        map.Emplace(2, i);
+        map.Emplace(3, i);
+    }
+
+    BENCHMARK_START(NumericMap_GetKeys, 65536 * 16);
+    BENCHMARK_LOOP(NumericMap_GetKeys)
+    {
+        if (map.GetKeys() != 4)
+        {
+            BENCHMARK_FAIL(NumericMap_GetKeys);
+            break;
+        }
+    }
+    return BENCHMARK_END(NumericMap_GetKeys);
+}
+
 bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
 {
     auto Results = Fn();
@@ -48,6 +73,7 @@ bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
 bool Benchmark()
 {
     RunBenchmark("NumericMap::Find", Benchmark_NumericMap_Find);
+    RunBenchmark("NumericMap::GetKeys", Benchmark_NumericMap_GetKeys);
 
     return true;
 }
