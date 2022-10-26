@@ -64,6 +64,12 @@ public:
      * @return Pointer to class information if it exists, nullptr otherwise
      */
     const Class* GetClass(ClassId id) const;
+
+    /**
+     * Debug function to print information about a class
+     * @param id  Class ID
+     */
+    void DumpClass(ClassId id) const;
 private:
     static ClassRegistry* s_Instance;
 

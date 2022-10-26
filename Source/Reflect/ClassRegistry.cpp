@@ -36,4 +36,48 @@ namespace Exi::Reflect
     {
         return m_ClassMap.contains(id) ? &m_ClassMap.at(id) : nullptr;
     }
+
+    void ClassRegistry::DumpClass(ClassId id) const
+    {
+        const Class* theClass = GetClass(id);
+        const Class* superClass;
+        if (!theClass)
+        {
+            printf("Class ID '%llx' was not found!\n", id);
+            return;
+        }
+
+        superClass = GetClass(theClass->GetSuperId());
+        if (!superClass)
+            printf("\nClass %s (ID: %llx):\n", theClass->GetName(), theClass->GetId());
+        else
+            printf("\nClass %s (ID: %llx): extends %s (ID: %llx)\n", theClass->GetName(), theClass->GetId(),
+                   superClass->GetName(), superClass->GetId());
+
+        auto methodCount = theClass->GetMethodCount();
+        auto fieldCount  = theClass->GetFieldCount();
+        auto methods = new Method const*[methodCount];
+        auto fields  = new Field const*[fieldCount];
+
+        methodCount = theClass->GetMethods(methods, methodCount);
+        fieldCount  = theClass->GetFields(fields, fieldCount);
+
+        printf("    Methods:\n");
+        for (auto i = 0; i < methodCount; i++)
+        {
+
+        }
+
+        printf("    Fields:\n");
+        for (auto i = 0; i < fieldCount; i++)
+        {
+            const Field* field = fields[i];
+            Type type = field->GetType();
+            const char* typeName = type > TypeObject ? TypeStrings[TypeObject] : TypeStrings[type];
+            printf("        %s : %s\n", field->GetName(), typeName);
+        }
+
+        delete [] fields;
+        delete [] methods;
+    }
 }

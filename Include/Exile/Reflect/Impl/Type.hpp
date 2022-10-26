@@ -39,7 +39,20 @@ enum Type : TypeId
     TypeDouble,
     TypeString,
     TypeBoolean,
-    TypeObject = 32
+    TypeObject
+};
+
+static constexpr inline const char* TypeStrings[] = {
+    "null",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "float",
+    "double",
+    "string",
+    "boolean",
+    "object"
 };
 
 /**
