@@ -12,40 +12,29 @@ namespace Exi::ECS
 
     Entity::~Entity()
     {
-        for (auto& pair : m_ComponentMap)
-        {
-            delete pair.second;
-        }
+
     }
 
     Component* Entity::GetComponent(Reflect::ClassId id) const
     {
-        auto it = m_ComponentMap.find(id);
-        return it != m_ComponentMap.end() ? it->second : nullptr;
+        Component* component = nullptr;
+        m_ComponentMap.Find(id, &component, 1);
+        return component;
     }
 
     int Entity::GetComponentsOfType(Reflect::ClassId id, Component** components, std::size_t maxComponents) const
     {
-        auto iterators = m_ComponentMap.equal_range(id);
-        int count = 0;
-        for (auto [begin, end] = iterators; begin != end; ++begin)
-        {
-            if (count >= maxComponents)
-                break;
-            *(components++) = begin->second;
-            ++count;
-        }
-        return count;
+        return m_ComponentMap.Find(id, components, maxComponents);
     }
 
     void Entity::AttachComponent(Reflect::ClassId id, Component* component)
     {
-        m_ComponentMap.emplace(id, component)->second->OnAttached(*this);
+        m_ComponentMap.Emplace(id, component)->OnAttached(*this);
     }
 
     int Entity::GetComponentCount(Reflect::ClassId id) const
     {
-        return m_ComponentMap.count(id);
+        return m_ComponentMap.Count(id);
     }
 
 }

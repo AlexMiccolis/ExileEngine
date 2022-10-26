@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Exile/Reflect/Reflection.hpp>
-#include <unordered_map>
+#include <Exile/TL/NumericMap.hpp>
 #include <memory>
 
 namespace Exi::ECS
@@ -29,7 +29,7 @@ namespace Exi::ECS
         template <Reflect::ReflectiveClass C> requires std::derived_from<C, Component>
         C* GetComponent() const
         {
-            return static_cast<C*>(GetComponent(C::StaticClass::Id));
+            return static_cast<C*>(GetComponent(C::Static::Id));
         }
 
         /**
@@ -93,7 +93,7 @@ namespace Exi::ECS
 
     private:
         Component* m_RootComponent;
-        std::unordered_multimap<Reflect::ClassId, class Component*> m_ComponentMap;
+        TL::NumericMap<Reflect::ClassId, class Component*> m_ComponentMap;
     };
 
 }

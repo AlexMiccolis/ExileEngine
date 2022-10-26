@@ -57,7 +57,6 @@ Exi::Unit::BenchmarkResults Benchmark_ComponentSearch()
         }
 #else
         TransformComponent* component = entity.GetComponent<TransformComponent>();
-        constexpr int a = sizeof(TransformComponent);
         if (component == nullptr)
         {
             BENCHMARK_FAIL(ComponentSearch);
