@@ -271,7 +271,7 @@ bool Benchmark()
     RunBenchmark("Field Set", Benchmark_FieldSet);
     RunBenchmark("Naive Field Get", Benchmark_NaiveFieldGet);
     RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
-    RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
+    //RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
 
     return true;
 }
