@@ -102,7 +102,21 @@ namespace Exi::TL
         NumericMap() : m_BucketColumns { nullptr } { }
         ~NumericMap()
         {
+            for (int c = 0; c < Columns; c++)
+            {
+                auto* col = m_BucketColumns[c];
 
+                if (col == nullptr)
+                    continue;
+
+                for (int r = 0; r < Rows; r++)
+                {
+                    RowHead& row = (*col)[r];
+                    DestroyBucketList(row);
+                }
+
+                delete col;
+            }
         }
 
         static constexpr inline BucketPos GetBucket(Key key)
@@ -270,6 +284,25 @@ namespace Exi::TL
             if (!row)
                 row = m_BucketColumns[HighWord(pos) % Columns] = new RowType { };
             return row;
+        }
+
+        void DestroyBucketList(RowHead& row)
+        {
+            BucketNode* node = row.bucketNode;
+            KeyNode* keyNode = row.keyNode;
+            while (node != nullptr)
+            {
+                BucketNode* lastNode = node;
+                node = node->next;
+                delete lastNode;
+            }
+
+            while (keyNode != nullptr)
+            {
+                KeyNode* lastNode = keyNode;
+                keyNode = keyNode->next;
+                delete lastNode;
+            }
         }
 
         std::array<RowType*, Columns> m_BucketColumns;
