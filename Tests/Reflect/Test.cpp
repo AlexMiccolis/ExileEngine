@@ -15,7 +15,7 @@ DefineClass(TestClass)
 public:
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
-        ExposeField(Class, TestClass, m_MyInt);
+        ExposeField(Class, m_MyInt);
         TestClass_Static = true;
         puts("TestClass::StaticInitialize()");
     }
@@ -28,7 +28,7 @@ DeriveClass(DerivedTestClass, TestClass)
 public:
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
-        ExposeField(Class, DerivedTestClass, m_MyOtherInt);
+        ExposeField(Class, m_MyOtherInt);
         DerivedTestClass_Static = true;
         puts("DerivedTestClass::StaticInitialize()");
     }

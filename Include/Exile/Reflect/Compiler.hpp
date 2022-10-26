@@ -108,4 +108,32 @@ namespace Exi::Reflect
         using Owner = const Class&;
     };
 
+    /**
+     * Helper template for breaking down pointers into types
+     * @tparam T
+     */
+    template <class T>
+    struct PointerTraits
+    {
+        using ValueType = T;
+        using PointerType = T*;
+        using ReferenceType = T&;
+    };
+
+    template <class T>
+    struct PointerTraits<T*>
+    {
+        using ValueType = T;
+        using PointerType = T*;
+        using ReferenceType = T&;
+    };
+
+    template <class T>
+    struct PointerTraits<T&>
+    {
+        using ValueType = T;
+        using PointerType = T*;
+        using ReferenceType = T&;
+    };
+
 }

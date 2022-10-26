@@ -39,7 +39,7 @@ enum Type : TypeId
     TypeDouble,
     TypeString,
     TypeBoolean,
-    TypeObject = 32 // Must be always be last
+    TypeObject = 32
 };
 
 /**

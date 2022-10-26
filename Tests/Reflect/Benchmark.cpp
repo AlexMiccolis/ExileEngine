@@ -44,8 +44,8 @@ public:
 
     static void StaticInitialize(Exi::Reflect::Class& Class)
     {
-        ExposeField(Class, FieldClass, m_A);
-        ExposeField(Class, FieldClass, m_B);
+        ExposeField(Class, m_A);
+        ExposeField(Class, m_B);
         ExposeMethod(Class, FieldClass, SetA);
         ExposeMethod(Class, FieldClass, SetAB);
         ExposeMethod(Class, FieldClass, GetA);

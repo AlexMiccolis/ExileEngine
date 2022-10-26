@@ -18,7 +18,7 @@ namespace Exi::Reflect
     struct StaticClass
     {
         /* Declaration type of this class */
-        using Type = ClassType;
+        using Class = ClassType;
 
         /* Super type of this class */
         using SuperType = SuperClassType;
@@ -28,6 +28,9 @@ namespace Exi::Reflect
 
         /* ID of this class */
         static constexpr ClassId Id = ClsId;
+
+        /* Type of this class */
+        static constexpr Type Type = (enum Type)ClsId;
 
         /* ID of this class's super class */
         static constexpr ClassId SuperId = SuperClassType::StaticClass::Id;
@@ -57,14 +60,11 @@ namespace Exi::Reflect
     #pragma endregion
 
     /**
-     * TypeValue specialization for ReflectiveClasses
-     * @tparam T
+     * TryRegisterClass forward definition
+     * @tparam Clazz
      */
-    template <ReflectiveClass T> struct TypeValue<T>
-    {
-        static constexpr Type Value = TypeObject;
-        static constexpr ClassId Id = T::StaticClass::Id;
-    };
+    template <ReflectiveClass Clazz>
+    static inline void TryRegisterClass();
 
     #pragma region Static Constructors
     template <ReflectiveClass Clazz>
@@ -126,15 +126,22 @@ namespace Exi::Reflect
     {
     public:
         template <class FieldType, TemplateString Name, ReflectiveClass Owner, std::size_t Offset>
-        static Field From()
+        static inline Field From()
         {
-            return Field(
-                    Hash(Name.Data()),
-                    TypeValue<FieldType>::Value,
-                    Owner::StaticClass::Id,
-                    Offset,
-                    Name.Data()
-                    );
+            constexpr FieldId Id = Hash(Name.Data());
+            using PtrTraits = PointerTraits<FieldType>;
+
+            /* Don't use TypeValue if FieldType is a Class pointer */
+            if constexpr (std::is_pointer_v<FieldType> &&
+                    std::derived_from<typename PtrTraits::ValueType, ClassBase>)
+            {
+                TryRegisterClass<typename PtrTraits::ValueType>();
+                return Field(Id, PtrTraits::ValueType::StaticClass::Type, Owner::StaticClass::Id, Offset, Name.Data());
+            }
+            else
+            {
+                return Field(Id, TypeValue<FieldType>::Value, Owner::StaticClass::Id, Offset, Name.Data());
+            }
         }
 
         [[nodiscard]] FieldId GetId() const { return m_Id; }
@@ -375,13 +382,6 @@ namespace Exi::Reflect
     };
 
     /**
-     * TryRegisterClass forward definition
-     * @tparam Clazz
-     */
-    template <ReflectiveClass Clazz>
-    static inline void TryRegisterClass();
-
-    /**
      * Runtime reflection information
      * @tparam ClassType Class declaration type
      * @tparam ClassName Class name
@@ -445,12 +445,12 @@ namespace Exi::Reflect
 
 #define DefineClass(Name) class Name : public Exi::Reflect::ReflectionClass<Name, #Name>
 #define DeriveClass(Name, Super) class Name : public Exi::Reflect::ReflectionClass<Name, #Name, Super>
-#define ExposeField(ClassRef, Owner, Name) \
-    constexpr auto Field_##Name##_Offset = offsetof(Owner, Name); \
+#define ExposeField(ClassRef, Name) \
+    constexpr auto Field_##Name##_Offset = offsetof(Self, Name); \
     auto Field_##Name = Exi::Reflect::Field::From<      \
         decltype(Name),          \
         #Name,                   \
-        Owner,                   \
+        Self,                   \
         Field_##Name##_Offset>();          \
     ClassRef.ExposeField(Field_##Name);
 #define ExposeMethod(ClassRef, Owner, Name) \
