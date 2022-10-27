@@ -316,7 +316,7 @@ namespace Exi::Reflect
          * Expose a field to reflection
          * @param field
          */
-        void ExposeField(const Field& field)
+        void Expose(const Field& field)
         {
             m_FieldMap.emplace(field.GetId(), field);
         }
@@ -325,7 +325,7 @@ namespace Exi::Reflect
          * Expose a method to reflection
          * @param method
          */
-        void ExposeMethod(const Method& method)
+        void Expose(const Method& method)
         {
             m_MethodMap.emplace(method.GetId(), method);
         }
@@ -471,8 +471,17 @@ namespace Exi::Reflect
         #Name,                   \
         Self,                   \
         Field_##Name##_Offset>();          \
-    ClassRef.ExposeField(Field_##Name);
+    ClassRef.Expose(Field_##Name);
+#define ExposeField_Aliased(ClassRef, Name, Alias) \
+    constexpr auto Field_##Alias##_Offset = offsetof(Self, Name); \
+    auto Field_##Alias = Exi::Reflect::Field::From<      \
+        decltype(Name),          \
+        #Alias,                   \
+        Self,                   \
+        Field_##Alias##_Offset>();          \
+    ClassRef.Expose(Field_##Alias);
+
 #define ExposeMethod(ClassRef, Owner, Name) \
     const Exi::Reflect::Method& Method_##Name = Exi::Reflect::Method::From<Owner, #Name, &Owner::Name>(); \
-    ClassRef.ExposeMethod(Method_##Name);
+    ClassRef.Expose(Method_##Name);
 
