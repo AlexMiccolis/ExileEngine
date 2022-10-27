@@ -25,6 +25,7 @@ endfunction()
 get_architecture()
 message(WARNING "Target Architecture: ${TARGET_ARCHITECTURE}")
 
+add_subdirectory(Dependencies)
 add_subdirectory(Source)
 
 enable_testing()

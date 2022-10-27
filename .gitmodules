@@ -1,0 +1,3 @@
+[submodule "Dependencies/LuaJIT"]
+	path = Dependencies/LuaJIT
+	url = https://github.com/AlexMiccolis/LuaJIT-cmake
