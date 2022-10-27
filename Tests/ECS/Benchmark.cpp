@@ -68,25 +68,8 @@ Exi::Unit::BenchmarkResults Benchmark_ComponentSearch()
     return BENCHMARK_END(ComponentSearch);
 }
 
-bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
-{
-    auto Results = Fn();
-    if (Results.Failed)
-    {
-        printf("%s: FAILED\n", Name);
-        return false;
-    }
-
-    printf("%s: %llu iterations, %llu ns/iteration, %.07f total seconds\n",
-           Name,
-           Results.IterationsCount,
-           Results.NanosPerIteration,
-           Results.TotalSeconds);
-    return true;
-}
-
 bool Benchmark()
 {
-    RunBenchmark("Entity Component Search", Benchmark_ComponentSearch);
+    Exi::Unit::RunBenchmark("Entity Component Search", Benchmark_ComponentSearch);
     return true;
 }

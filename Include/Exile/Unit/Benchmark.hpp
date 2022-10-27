@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdio>
 
 namespace Exi::Unit
 {
@@ -16,6 +17,23 @@ namespace Exi::Unit
             : IterationsCount(Iterations), TotalSeconds(Seconds),
             NanosPerIteration(static_cast<std::size_t>(Seconds / Iterations / 1e-9)), Failed(Fail) { }
     };
+
+    static inline bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
+    {
+        auto Results = Fn();
+        if (Results.Failed)
+        {
+            printf("%s: FAILED\n", Name);
+            return false;
+        }
+
+        printf("%s: %lu iterations, %lu ns/iteration, %.07f total seconds\n",
+               Name,
+               Results.IterationsCount,
+               Results.NanosPerIteration,
+               Results.TotalSeconds);
+        return true;
+    }
 
 };
 

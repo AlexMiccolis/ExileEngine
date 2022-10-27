@@ -246,32 +246,15 @@ Exi::Unit::BenchmarkResults Benchmark_MethodInvoke()
     return BENCHMARK_END(MethodInvoke);
 }
 
-bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
-{
-    auto Results = Fn();
-    if (Results.Failed)
-    {
-        printf("%s: FAILED\n", Name);
-        return false;
-    }
-
-    printf("%s: %llu iterations, %llu ns/iteration, %.07f total seconds\n",
-           Name,
-           Results.IterationsCount,
-           Results.NanosPerIteration,
-           Results.TotalSeconds);
-    return true;
-}
-
 bool Benchmark()
 {
-    RunBenchmark("Non-Reflective Object Construction", Benchmark_NonReflectiveConstruction);
-    RunBenchmark("Reflective Object Construction", Benchmark_DerivedConstruction);
-    RunBenchmark("Field Get", Benchmark_FieldGet);
-    RunBenchmark("Field Set", Benchmark_FieldSet);
-    RunBenchmark("Naive Field Get", Benchmark_NaiveFieldGet);
-    RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
-    //RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
+    Exi::Unit::RunBenchmark("Non-Reflective Object Construction", Benchmark_NonReflectiveConstruction);
+    Exi::Unit::RunBenchmark("Reflective Object Construction", Benchmark_DerivedConstruction);
+    Exi::Unit::RunBenchmark("Field Get", Benchmark_FieldGet);
+    Exi::Unit::RunBenchmark("Field Set", Benchmark_FieldSet);
+    Exi::Unit::RunBenchmark("Naive Field Get", Benchmark_NaiveFieldGet);
+    Exi::Unit::RunBenchmark("Unchecked Method Invoke", Benchmark_MethodInvokeUnchecked);
+    //Exi::Unit::RunBenchmark("Method Invoke", Benchmark_MethodInvoke);
 
     return true;
 }

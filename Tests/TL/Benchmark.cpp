@@ -53,27 +53,10 @@ Exi::Unit::BenchmarkResults Benchmark_NumericMap_GetKeys()
     return BENCHMARK_END(NumericMap_GetKeys);
 }
 
-bool RunBenchmark(const char* Name, Exi::Unit::BenchmarkResults(*Fn)())
-{
-    auto Results = Fn();
-    if (Results.Failed)
-    {
-        printf("%s: FAILED\n", Name);
-        return false;
-    }
-
-    printf("%s: %llu iterations, %llu ns/iteration, %.07f total seconds\n",
-           Name,
-           Results.IterationsCount,
-           Results.NanosPerIteration,
-           Results.TotalSeconds);
-    return true;
-}
-
 bool Benchmark()
 {
-    RunBenchmark("NumericMap::Find", Benchmark_NumericMap_Find);
-    RunBenchmark("NumericMap::GetKeys", Benchmark_NumericMap_GetKeys);
+    Exi::Unit::RunBenchmark("NumericMap::Find", Benchmark_NumericMap_Find);
+    Exi::Unit::RunBenchmark("NumericMap::GetKeys", Benchmark_NumericMap_GetKeys);
 
     return true;
 }
