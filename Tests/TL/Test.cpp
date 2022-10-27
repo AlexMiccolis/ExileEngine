@@ -45,11 +45,21 @@ bool Test_NumericMap_GetKeys()
     return false;
 }
 
+bool Test_NumericMap_Contract()
+{
+    Exi::TL::NumericMap<std::size_t, int> map;
+    map.Expand();
+    map.Emplace(1, 1);
+    int freed = map.Contract();
+    return freed == (map.Rows * (map.Columns - 1));
+}
+
 int main(int argc, const char** argv)
 {
     Exi::Unit::Tests tests ({
         { "NumericMap_Find", Test_NumericMap_Find },
         { "NumericMap_GetKeys", Test_NumericMap_GetKeys },
+        { "NumericMap_Contract", Test_NumericMap_Contract },
         { "Benchmark", Benchmark }
     });
     return tests.Execute(argc, argv);

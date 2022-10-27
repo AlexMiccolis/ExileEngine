@@ -173,7 +173,7 @@ namespace Exi::TL
             std::size_t i;
             BucketNode* node;
 
-            if (!keyNode || !values)
+            if (!keyNode)
                 return 0;
 
             node = keyNode->first;
@@ -224,6 +224,53 @@ namespace Exi::TL
          * @return Key count
          */
         [[nodiscard]] std::size_t GetKeys() const { return GetKeys(nullptr, 0); }
+
+        /**
+         * Expand the map to it's maximum capacity.
+         * This can speed up insertions at the cost of memory.
+         */
+        void Expand()
+        {
+            for (int i = 0; i < Columns; i++)
+            {
+                if (!m_BucketColumns[i])
+                    m_BucketColumns[i] = new RowType { };
+            }
+        }
+
+        /**
+         * Search the map for empty bucket rows and prune them to save memory.
+         * @return Number of buckets freed
+         */
+        int Contract()
+        {
+            int freed = 0;
+            for (int i = 0; i < Columns; i++)
+            {
+                RowType* row = m_BucketColumns[i];
+                bool empty = true;
+
+                if (!row)
+                    continue;
+
+                for (int r = 0; r < Rows; r++)
+                {
+                    if (row->at(r).bucketNode != nullptr)
+                    {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if (empty)
+                {
+                    m_BucketColumns[i] = nullptr;
+                    delete row;
+                    freed += Rows;
+                }
+            }
+            return freed;
+        }
     private:
         /**
          * Insert an empty node for the given key
