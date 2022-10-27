@@ -4,6 +4,7 @@ target_include_directories(TLTest PUBLIC ${PROJECT_SOURCE_DIR}/Include)
 add_test(NAME "NumericMap::Find"           COMMAND TLTest NumericMap_Find)
 add_test(NAME "NumericMap::GetKeys"        COMMAND TLTest NumericMap_GetKeys)
 add_test(NAME "NumericMap::Contract"       COMMAND TLTest NumericMap_Contract)
+add_test(NAME "FreeMap::Allocate"          COMMAND TLTest FreeMap_Allocate)
 add_test(NAME "Template Library Benchmark" COMMAND TLTest Benchmark)
 
 add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp)

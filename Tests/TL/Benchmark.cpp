@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <Exile/Unit/Benchmark.hpp>
 #include <Exile/TL/NumericMap.hpp>
+#include <Exile/TL/FreeMap.hpp>
 
 Exi::Unit::BenchmarkResults Benchmark_NumericMap_Find()
 {
@@ -53,10 +54,30 @@ Exi::Unit::BenchmarkResults Benchmark_NumericMap_GetKeys()
     return BENCHMARK_END(NumericMap_GetKeys);
 }
 
+Exi::Unit::BenchmarkResults Benchmark_FreeMap_Allocate()
+{
+    constexpr std::size_t count = 8;
+    Exi::TL::FreeMap<64> map;
+
+    BENCHMARK_START(FreeMap_Allocate, 65536 * 16);
+    BENCHMARK_LOOP(FreeMap_Allocate)
+    {
+        auto i = map.Allocate();
+        if (i != 0)
+        {
+            BENCHMARK_FAIL(FreeMap_Allocate);
+            break;
+        }
+        map.Free(i);
+    }
+    return BENCHMARK_END(FreeMap_Allocate);
+}
+
 bool Benchmark()
 {
-    Exi::Unit::RunBenchmark("NumericMap::Find", Benchmark_NumericMap_Find);
+    Exi::Unit::RunBenchmark("NumericMap::Find",    Benchmark_NumericMap_Find);
     Exi::Unit::RunBenchmark("NumericMap::GetKeys", Benchmark_NumericMap_GetKeys);
+    Exi::Unit::RunBenchmark("FreeMap::Allocate",   Benchmark_FreeMap_Allocate);
 
     return true;
 }

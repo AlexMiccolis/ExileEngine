@@ -1,5 +1,6 @@
 #include <Exile/Unit/Test.hpp>
 #include <Exile/TL/NumericMap.hpp>
+#include <Exile/TL/FreeMap.hpp>
 
 extern bool Benchmark();
 
@@ -54,13 +55,27 @@ bool Test_NumericMap_Contract()
     return freed == (map.Rows * (map.Columns - 1));
 }
 
+bool Test_FreeMap_Allocate()
+{
+    Exi::TL::FreeMap<1024> map;
+    constexpr int count = 66;
+    std::size_t index;
+
+    for (int i = 0; i < count; i++)
+        index = map.Allocate();
+    map.Free(index);
+    return index == (count - 1);
+}
+
 int main(int argc, const char** argv)
 {
     Exi::Unit::Tests tests ({
         { "NumericMap_Find", Test_NumericMap_Find },
         { "NumericMap_GetKeys", Test_NumericMap_GetKeys },
         { "NumericMap_Contract", Test_NumericMap_Contract },
+        { "FreeMap_Allocate", Test_FreeMap_Allocate },
         { "Benchmark", Benchmark }
     });
+
     return tests.Execute(argc, argv);
 }
