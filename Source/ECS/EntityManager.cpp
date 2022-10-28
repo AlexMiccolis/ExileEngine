@@ -17,7 +17,19 @@ namespace Exi::ECS
     {
         std::unique_lock lock(m_Mutex);
         SystemId id = m_Systems.size();
-        m_Systems.push_back(system);
+        m_Systems.emplace_back(system);
+
+        if (m_Entities.size() > 0)
+        {
+            // New system needs to be notified of existing entities
+            for (auto& pair : m_Entities)
+            {
+                Entity& e = *pair.second.get();
+                if (system->NotifyEntity(e))
+                    system->AddEntity(e);
+            }
+        }
+
         return id;
     }
 
@@ -33,37 +45,47 @@ namespace Exi::ECS
     EntityManager::EntityId EntityManager::AddEntity(std::unique_ptr<Entity>&& entity)
     {
         std::unique_lock lock(m_Mutex);
-        EntityId id = m_Entities.size();
-        auto* e = m_Entities.emplace_back(std::move(entity)).get();
+
+        EntityId id = TL::UUID::Random();
+        auto pair = m_Entities.emplace(id, std::move(entity));
+        auto& e = *pair.first->second.get();
+
+        e.SetUniqueId(id);
+        e.SetEntityManager(this);
+
         for (auto* system : m_Systems)
         {
-            if (system->NotifyEntity(*e))
+            if (system->NotifyEntity(e))
                 system->AddEntity(e);
         }
+
         return id;
     }
 
     const Entity* EntityManager::GetEntity(EntityManager::EntityId id) const
     {
         std::shared_lock lock(m_Mutex);
-        if (id >= m_Entities.size())
+        if (!m_Entities.contains(id))
             return nullptr;
-        return m_Entities[id].get();
+        return m_Entities.at(id).get();
     }
 
-    int EntityManager::GetEntitiesWithComponent(Reflect::ClassId component, std::vector<const Entity*>& entitiesOut) const
+    Entity* EntityManager::RemoveEntity(EntityManager::EntityId id)
     {
-        std::shared_lock lock(m_Mutex);
-        int found = 0;
-        for (const auto& entity : m_Entities)
-        {
-            if (entity->GetComponentCount(component))
-            {
-                entitiesOut.push_back(entity.get());
-                ++found;
-            }
-        }
-        return found;
+        std::unique_lock lock(m_Mutex);
+        if (!m_Entities.contains(id))
+            return nullptr;
+
+        // Release entity from smart pointer
+        Entity* entity = m_Entities.at(id).release();
+
+        // Notify systems that it is being removed
+        for (auto* system : m_Systems)
+            system->NotifyEntityRemoved(*entity);
+
+        // Erase it from the map
+        m_Entities.erase(id);
+        return entity;
     }
 
 }

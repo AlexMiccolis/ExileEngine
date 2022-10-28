@@ -6,6 +6,10 @@
 namespace Exi::ECS
 {
 
+    /**
+     * Default Tick implementation, does absolutely nothing
+     * @param deltaTime
+     */
     void System::Tick(double deltaTime)
     {
 
@@ -22,12 +26,22 @@ namespace Exi::ECS
     }
 
     /**
+     * Default NotifyEntityRemoved implementation, always returns false
+     * @param entity
+     * @return false
+     */
+    bool System::NotifyEntityRemoved(Entity& entity)
+    {
+        return false;
+    }
+
+    /**
      * AddEntity implementation, must be called with Super::AddEntity if overridden
      * @param entity
      */
-    void System::AddEntity(Entity* entity)
+    void System::AddEntity(Entity& entity)
     {
-        m_Entities.push_back(entity);
+        m_Entities.push_back(&entity);
     }
 
 }

@@ -3,11 +3,13 @@
 #include <Exile/ECS/Component.hpp>
 #include <Exile/ECS/Entity.hpp>
 #include <Exile/ECS/System.hpp>
+#include <Exile/TL/UUID.hpp>
 #include <Exile/Reflect/Reflection.hpp>
 #include <shared_mutex>
 #include <mutex>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace Exi::ECS
 {
@@ -19,7 +21,7 @@ namespace Exi::ECS
     class EntityManager
     {
     public:
-        using EntityId = uint32_t;
+        using EntityId = TL::UUID;
         using SystemId = uint32_t;
 
         EntityManager();
@@ -52,17 +54,18 @@ namespace Exi::ECS
          */
         const Entity* GetEntity(EntityId id) const;
 
-        /**
-         * Find all entities with one or more of the specified component
-         * @param component
-         * @param entitiesOut
-         * @return Number of entities with the specified component
-         */
-        int GetEntitiesWithComponent(Reflect::ClassId component, std::vector<const Entity*>& entitiesOut) const;
     private:
+        /**
+         * Remove an entity and return its raw pointer
+         * @param id
+         * @return Entity pointer if it exists, nullptr otherwise
+         */
+        Entity* RemoveEntity(EntityId id);
+
         mutable std::shared_mutex m_Mutex;
         std::vector<System*> m_Systems;
-        std::vector<std::unique_ptr<Entity>> m_Entities;
+        std::unordered_map<EntityId, std::unique_ptr<Entity>> m_Entities;
+        // TODO: Use something faster than unordered_map
     };
 
 }

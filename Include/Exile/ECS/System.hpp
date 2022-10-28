@@ -26,10 +26,18 @@ namespace Exi::ECS
         virtual bool NotifyEntity(const Entity& entity);
 
         /**
+         * Called by the entity manager to notify the system that
+         * an entity is being removed.
+         * @param entity
+         * @return Returns true if this system was using the entity, false otherwise
+         */
+        virtual bool NotifyEntityRemoved(Entity& entity);
+
+        /**
          * Add an entity to the system.
          * @param entity
          */
-        virtual void AddEntity(Entity* entity);
+        virtual void AddEntity(Entity& entity);
 
         [[nodiscard]] const std::vector<Entity*>& GetEntities() const { return m_Entities; }
     protected:

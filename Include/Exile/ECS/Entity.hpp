@@ -2,17 +2,18 @@
 
 #include <Exile/Reflect/Reflection.hpp>
 #include <Exile/TL/NumericMap.hpp>
+#include <Exile/TL/UUID.hpp>
 #include <memory>
 
 namespace Exi::ECS
 {
     class Component;
+    class EntityManager;
 
     DefineClass(Entity)
     {
     public:
-        Entity();
-        Entity(const std::string_view& name);
+        Entity(const std::string_view& name = "");
         virtual ~Entity();
 
         /**
@@ -79,7 +80,7 @@ namespace Exi::ECS
          * @param id
          * @return Component count
          */
-        int GetComponentCount(Reflect::ClassId id) const;
+        [[nodiscard]] int GetComponentCount(Reflect::ClassId id) const;
 
 
         /**
@@ -87,20 +88,44 @@ namespace Exi::ECS
          * @return Component count
          */
         template <Reflect::ReflectiveClass C> requires std::derived_from<C, Component>
-        int GetComponentCount() const
+        [[nodiscard]] int GetComponentCount() const
         {
             return GetComponentCount(C::Static::Id);
         }
 
         /**
          * Get the name of the entity. Entity names are not guaranteed to be unique.
-         * @return
+         * @return Entity name
          */
-        const std::string& GetName() const { return m_Name; }
+        [[nodiscard]] const std::string& GetName() const { return m_Name; }
+
+        /**
+         * Get the unique ID of the entity.
+         * @return Entity UUID
+         */
+        [[nodiscard]] const TL::UUID& GetUniqueId() const { return m_UUID; }
+
+    protected:
+        friend class EntityManager;
+
+        /**
+         * Set the unique ID of the entity within an entity manager
+         * @param uuid New UUID
+         */
+        void SetUniqueId(const TL::UUID& uuid) { m_UUID = uuid; }
+
+        /**
+         * Set the unique ID of the entity within an entity manager
+         * @param uuid New UUID
+         */
+        void SetEntityManager(const EntityManager* entityManager) { m_EntityManager = entityManager; }
     private:
         Component* m_RootComponent;
         TL::NumericMap<Reflect::ClassId, class Component*> m_ComponentMap;
+
         std::string m_Name;
+        TL::UUID m_UUID;
+        const EntityManager* m_EntityManager;
     };
 
 }

@@ -101,17 +101,17 @@ Exi::Unit::BenchmarkResults Benchmark_EntityManagerAddEntity()
     entity2->AttachComponent(std::make_unique<TransformComponent>());
     manager.AddEntity(std::move(entity2));
 
-    BENCHMARK_START(EntitySearch, 65536);
-    BENCHMARK_LOOP(EntitySearch)
+    BENCHMARK_START(AddEntity, 65536);
+    BENCHMARK_LOOP(AddEntity)
     {
         manager.AddEntity(std::make_unique<Exi::ECS::Entity>());
         if (system.GetEntities().size() != 2)
         {
-            BENCHMARK_FAIL(EntitySearch);
+            BENCHMARK_FAIL(AddEntity);
             break;
         }
     }
-    return BENCHMARK_END(EntitySearch);
+    return BENCHMARK_END(AddEntity);
 }
 
 Exi::Unit::BenchmarkResults Benchmark_EntityManagerTickSystems()
