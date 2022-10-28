@@ -2,12 +2,11 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 #include <unordered_map>
 
 namespace Exi::Unit
 {
-
-    using TestFunction = bool(*)();
 
     /**
      * Class representing a set of unit tests
@@ -15,11 +14,24 @@ namespace Exi::Unit
     class Tests
     {
     public:
+        using TestFunction = std::function<bool()>;
         using TestMap = std::unordered_map<std::string, TestFunction>;
+
+        Tests() = default;
         explicit Tests(const TestMap& testMap)
         {
             for (const auto& pair : testMap)
                 m_TestMap.emplace(pair);
+        }
+
+        /**
+         * Add a named test function
+         * @param name Test name
+         * @param fn Test function
+         */
+        void Add(const std::string_view& name, TestFunction&& fn)
+        {
+            m_TestMap.emplace(name, std::move(fn));
         }
 
         /**
