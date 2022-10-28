@@ -146,7 +146,7 @@ Exi::Unit::BenchmarkResults Benchmark_FieldGet()
     BENCHMARK_LOOP(FieldGet)
     {
         auto value = field->Get(&cls);
-        if (value.GetType() != Exi::Reflect::TypeInt32 || value.Get<int>() != 1)
+        if (value.GetType() != Exi::TL::TypeInt32 || value.Get<int>() != 1)
         {
             BENCHMARK_FAIL(FieldGet);
             break;
@@ -167,7 +167,7 @@ Exi::Unit::BenchmarkResults Benchmark_NaiveFieldGet()
         auto fieldClass = instance->GetClass<FieldClass>();
         auto field = fieldClass->GetField("m_A");
         auto value = field->Get(&cls);
-        if (value.GetType() != Exi::Reflect::TypeInt32 || value.Get<int>() != 1)
+        if (value.GetType() != Exi::TL::TypeInt32 || value.Get<int>() != 1)
         {
             BENCHMARK_FAIL(NaiveFieldGet);
             break;
@@ -231,11 +231,11 @@ Exi::Unit::BenchmarkResults Benchmark_MethodInvoke()
 
     BENCHMARK_LOOP(MethodInvoke)
     {
-        Exi::Reflect::TypedValue Parameters[] {
-            { Exi::Reflect::TypeInt32, Iteration },
-            { Exi::Reflect::TypeInt32, 1 }
+        Exi::TL::TypedValue Parameters[] {
+            { Exi::TL::TypeInt32, Iteration },
+            { Exi::TL::TypeInt32, 1 }
         };
-        Exi::Reflect::TypedValue RetVal = method->Invoke(&cls, Parameters, 2);
+        Exi::TL::TypedValue RetVal = method->Invoke(&cls, Parameters, 2);
         if (field->GetValue<int>(&cls) != Iteration)
         {
             BENCHMARK_FAIL(MethodInvoke);

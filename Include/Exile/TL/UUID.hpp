@@ -23,13 +23,13 @@ namespace Exi::TL
             };
             std::array<uint8_t, 16> bytes;
         };
-
-        UUID(uint32_t _a = 0, uint16_t _b = 0, uint16_t _c = 0, uint64_t _d = 0)
+        UUID() = default;
+        UUID(uint32_t _a, uint16_t _b, uint16_t _c, uint64_t _d)
             : a(_a), b(_b), c(_c), d(_d) { }
         UUID(const std::array<uint8_t, 16>& _bytes)
             : bytes(_bytes) { }
-        UUID(const UUID& uuid)
-            : bytes(uuid.bytes) { }
+        UUID(const UUID& uuid) = default;
+            //: a(uuid.a), b(uuid.b), c(uuid.c), d(uuid.d) { }
 
         bool operator==(const UUID& uuid) const
         {

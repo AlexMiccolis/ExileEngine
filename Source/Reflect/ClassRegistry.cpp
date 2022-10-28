@@ -72,9 +72,9 @@ namespace Exi::Reflect
         for (auto i = 0; i < fieldCount; i++)
         {
             const Field* field = fields[i];
-            Type type = field->GetType();
-            const char* typeName = type > TypeObject ? TypeStrings[TypeObject] : TypeStrings[type];
-            printf("        %s : %s\n", field->GetName(), typeName);
+            TL::Type type = field->GetType();
+            const auto& typeName = type > TL::TypeEND ? "object" : TL::TypeNames[type];
+            printf("        %s : %s\n", field->GetName(), typeName.data());
         }
 
         delete [] fields;

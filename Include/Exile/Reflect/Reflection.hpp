@@ -5,9 +5,34 @@
 #include <concepts>
 #include <vector>
 
+#include <Exile/TL/Type.hpp>
+
 namespace Exi::Reflect
 {
-    #include <Exile/Reflect/Impl/Type.hpp>
+    #pragma region ID Types
+    /**
+     * Class ID, generated from class names
+     * @see Exi::Reflect::Hash
+     */
+    using ClassId  = TL::TypeId;
+
+    /**
+     * Field ID, generated from field names
+     * @see Exi::Reflect::Hash
+     */
+    using FieldId  = TL::TypeId;
+
+    /**
+     * Method ID, generated from method names
+     * @see Exi::Reflect::Hash
+     */
+    using MethodId = TL::TypeId;
+    #pragma endregion
+
+    /**
+     * Forward declaration for ClassBase
+     */
+    struct alignas(sizeof(void*)) ClassBase;
 
     /**
      * Static reflection information.
@@ -30,7 +55,7 @@ namespace Exi::Reflect
         static constexpr ClassId Id = ClsId;
 
         /* Type of this class */
-        static constexpr Type ClassType = (enum Type)ClsId;
+        static constexpr TL::Type ClassType = (TL::Type)ClsId;
 
         /* ID of this class's super class */
         static constexpr ClassId SuperId = SuperClassType::Static::Id;
@@ -140,24 +165,24 @@ namespace Exi::Reflect
             }
             else
             {
-                return Field(Id, TypeValue<FieldType>::Value, Owner::Static::Id, Offset, Name.Data());
+                return Field(Id, TL::TypeValueOf<FieldType>::Value, Owner::Static::Id, Offset, Name.Data());
             }
         }
 
         [[nodiscard]] FieldId GetId() const { return m_Id; }
-        [[nodiscard]] Type  GetType() const { return m_Type; }
+        [[nodiscard]] TL::Type GetType() const { return m_Type; }
         [[nodiscard]] ClassId GetOwnerId() const { return m_OwnerId; }
         [[nodiscard]] std::size_t GetOffset() const { return m_Offset; }
         [[nodiscard]] const char* GetName() const { return m_Name; }
 
-        TypedValue Get(ClassBase* Instance) const
+        TL::TypedValue Get(ClassBase* Instance) const
         {
-            TypedValue value(m_Type);
+            TL::TypedValue value(m_Type);
             value.SetValue(&GetBasePointer(Instance)[m_Offset]);
             return value;
         }
 
-        bool Set(ClassBase* Instance, const TypedValue& Value) const
+        bool Set(ClassBase* Instance, const TL::TypedValue& Value) const
         {
             /* Make sure the types are compatible */
             if (m_Type != Value.GetType())
@@ -165,16 +190,16 @@ namespace Exi::Reflect
 
             switch (m_Type)
             {
-                case TypeInt8:
-                    *reinterpret_cast<int8_t*>(&GetBasePointer(Instance)[m_Offset]) = Value.Get<int8_t>();
+                case TL::TypeInt8:
+                    *reinterpret_cast<int8_t*>(&GetBasePointer(Instance)[m_Offset])  = Value.Get<int8_t>();
                     break;
-                case TypeInt16:
+                case TL::TypeInt16:
                     *reinterpret_cast<int16_t*>(&GetBasePointer(Instance)[m_Offset]) = Value.Get<int16_t>();
                     break;
-                case TypeInt32:
+                case TL::TypeInt32:
                     *reinterpret_cast<int32_t*>(&GetBasePointer(Instance)[m_Offset]) = Value.Get<int32_t>();
                     break;
-                case TypeInt64:
+                case TL::TypeInt64:
                     *reinterpret_cast<int64_t*>(&GetBasePointer(Instance)[m_Offset]) = Value.Get<int64_t>();
                     break;
                 default:
@@ -212,12 +237,12 @@ namespace Exi::Reflect
         friend class Class;
 
         FieldId m_Id;
-        Type m_Type;
+        TL::Type m_Type;
         ClassId m_OwnerId;
         std::size_t m_Offset;
         const char* m_Name;
 
-        Field(FieldId Id, Type FieldType, ClassId OwnerId, std::size_t Offset, const char* Name)
+        Field(FieldId Id, TL::Type FieldType, ClassId OwnerId, std::size_t Offset, const char* Name)
             : m_Id(Id), m_Type(FieldType), m_OwnerId(OwnerId), m_Offset(Offset), m_Name(Name) { }
 
         static inline char* GetBasePointer(ClassBase* Instance)
@@ -261,12 +286,12 @@ namespace Exi::Reflect
             return (Instance->*m_Function.GetFunction())(std::forward<Args>(args)...);
         }
 
-        TypedValue Invoke(ClassBase* Instance, TypedValue* Args, std::size_t Count) const
+        TL::TypedValue Invoke(ClassBase* Instance, TL::TypedValue* Args, std::size_t Count) const
         {
             return m_Function.Invoke(Instance, Args, Count);
         }
 
-        TypedValue Invoke(ClassBase* Instance, std::vector<TypedValue>& Args) const
+        TL::TypedValue Invoke(ClassBase* Instance, std::vector<TL::TypedValue>& Args) const
         {
             return m_Function.Invoke(Instance, Args.data(), Args.size());
         }

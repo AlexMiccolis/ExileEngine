@@ -8,7 +8,7 @@
 
 
 #if defined(__x86_64__) || defined(_M_X64)
-    extern "C" MS_ABI void* InvokeArgs(ClassBase* Instance, void* (ClassBase::*Fn)(...), TypedValue* Args, std::size_t Count);
+    extern "C" MS_ABI void* InvokeArgs(ClassBase* Instance, void* (ClassBase::*Fn)(...), TL::TypedValue* Args, std::size_t Count);
 #else
     extern "C" void* InvokeArgs(ClassBase* Instance, void* (ClassBase::*Fn)(...), TypedValue* Args, std::size_t Count);
 #endif
@@ -20,15 +20,15 @@ class RuntimeFunction
 {
 public:
     using FnType = void* (ClassBase::*)(...);
-    RuntimeFunction(FnType fn, Type returnType, std::vector<Type>&& argTypes)
+    RuntimeFunction(FnType fn, TL::Type returnType, std::vector<TL::Type>&& argTypes)
             : m_Function(fn), m_ReturnType(returnType), m_ArgTypes(std::move(argTypes)) { }
 
     template <class Traits, std::size_t... Indices>
     [[nodiscard]] static inline RuntimeFunction From(FnType Fn, std::index_sequence<Indices...>)
     {
-        std::vector<Type> types;
-        (types.push_back(TypeValue<typename Traits::template Arg<Indices>::Type>::Value), ...);
-        return RuntimeFunction(Fn, TypeValue<typename Traits::Return>::Value, std::move(types));
+        std::vector<TL::Type> types;
+        (types.push_back(TL::TypeValueOf<typename Traits::template Arg<Indices>::Type>::Value), ...);
+        return RuntimeFunction(Fn, TL::TypeValueOf<typename Traits::Return>::Value, std::move(types));
     }
 
     /**
@@ -45,17 +45,17 @@ public:
     }
 
     FnType GetFunction() const { return m_Function; }
-    Type GetReturnType() const { return m_ReturnType; }
+    TL::Type GetReturnType() const { return m_ReturnType; }
 
-    TypedValue Invoke(ClassBase* Instance, TypedValue* Args, std::size_t Count) const
+    TL::TypedValue Invoke(ClassBase* Instance, TL::TypedValue* Args, std::size_t Count) const
     {
-        TypedValue ReturnValue(m_ReturnType, 0);
+        TL::TypedValue ReturnValue(m_ReturnType, 0);
 
         /* Wrong amount of arguments */
         if (Count != m_ArgTypes.size())
         {
             fprintf(stderr, "Argument count mismatch\n");
-            return { TypeNull, nullptr };
+            return { TL::TypeNull, nullptr };
         }
 
         for (std::size_t i = 0; i < Count; i++)
@@ -64,7 +64,7 @@ public:
             if (Args[i].GetType() != m_ArgTypes[i])
             {
                 fprintf(stderr, "Argument type mismatch\n");
-                return { TypeNull, nullptr };
+                return { TL::TypeNull, nullptr };
             }
         }
 
@@ -75,6 +75,6 @@ public:
 
 private:
     FnType m_Function;
-    Type m_ReturnType;
-    std::vector<Type> m_ArgTypes;
+    TL::Type m_ReturnType;
+    std::vector<TL::Type> m_ArgTypes;
 };

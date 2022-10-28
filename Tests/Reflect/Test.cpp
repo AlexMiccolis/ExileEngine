@@ -53,8 +53,8 @@ bool Test_FieldGet()
     if (IntField == nullptr || OtherIntField == nullptr)
         return false;
 
-    Exi::Reflect::TypedValue myInt = IntField->Get(&Instance);
-    Exi::Reflect::TypedValue myOtherInt = OtherIntField->Get(&Instance);
+    auto myInt = IntField->Get(&Instance);
+    auto myOtherInt = OtherIntField->Get(&Instance);
     if (myInt.Get<int>() != 1 || myOtherInt.Get<int>() != 2)
         return false;
 
@@ -72,8 +72,8 @@ bool Test_FieldSet()
     if (IntField == nullptr || OtherIntField == nullptr)
         return false;
 
-    Exi::Reflect::TypedValue myInt = IntField->Get(&Instance);
-    Exi::Reflect::TypedValue myOtherInt = OtherIntField->Get(&Instance);
+    auto myInt = IntField->Get(&Instance);
+    auto myOtherInt = OtherIntField->Get(&Instance);
     if (myInt.Get<int>() != 1 || myOtherInt.Get<int>() != 2)
         return false;
 
