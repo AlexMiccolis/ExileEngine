@@ -12,7 +12,13 @@
     #define BYTESWAP16(x) __builtin_bswap16(x)
     #define BYTESWAP32(x) __builtin_bswap32(x)
     #define BYTESWAP64(x) __builtin_bswap64(x)
-    #define POPCNT(x)     __builtin_popcount(x)
+    #ifdef __x86_64__
+        #define POPCNT(x)   __builtin_popcountll(x)
+        #define FFS(x)      __builtin_ffsll(x)
+    #else
+        #define POPCNT(x)   __builtin_popcount(x)
+        #define FFS(x)      __builtin_ffs(x)
+    #endif
 #endif
 
 namespace Exi::TL
@@ -66,7 +72,7 @@ namespace Exi::TL
     static constexpr inline int FindFirstSet(std::size_t i)
     {
         if (!i) return -1;
-        return __builtin_ffsll(i) - 1;
+        return FFS(i) - 1;
     }
 
 }

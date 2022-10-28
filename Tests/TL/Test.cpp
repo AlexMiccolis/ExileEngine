@@ -1,6 +1,7 @@
 #include <Exile/Unit/Test.hpp>
 #include <Exile/TL/NumericMap.hpp>
 #include <Exile/TL/FreeMap.hpp>
+#include <Exile/TL/ByteUtils.hpp>
 
 extern bool Benchmark();
 
@@ -75,6 +76,14 @@ int main(int argc, const char** argv)
         { "NumericMap_Contract", Test_NumericMap_Contract },
         { "FreeMap_Allocate", Test_FreeMap_Allocate },
         { "Benchmark", Benchmark }
+    });
+
+    tests.Add("ByteUtils_PopCount", []{
+        return Exi::TL::PopCount(UINTPTR_MAX) == (sizeof(std::size_t) * 8);
+    });
+
+    tests.Add("ByteUtils_FindFirstSet", []{
+        return Exi::TL::FindFirstSet(0xfff0) == 4;
     });
 
     return tests.Execute(argc, argv);
