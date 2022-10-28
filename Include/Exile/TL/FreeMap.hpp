@@ -12,16 +12,17 @@ namespace Exi::TL
      * Fixed-size bitset representing a region of free and used objects
      * @tparam N Number of bits
      */
-    template <int N>
+    template <int N, typename Elem = std::size_t>
     class FreeMap
     {
     public:
         using Index   = std::size_t;
-        using Element = std::size_t;
-        static constexpr Index InvalidIndex = SIZE_MAX;
-        static constexpr int ElementBytes   = sizeof(Element);
-        static constexpr int ElementBits    = ElementBytes * 8;
-        static constexpr int Elements       = RoundUp(N, ElementBits) / ElementBits;
+        using Element = Elem;
+        static constexpr Element InvalidIndex = static_cast<Element>(SIZE_MAX);
+        static constexpr int ElementBytes     = sizeof(Element);
+        static constexpr int ElementBits      = ElementBytes * 8;
+        static constexpr int Elements         = RoundUp(N, ElementBits) / ElementBits;
+        static constexpr int Bits = N;
 
         static_assert(Elements >= 1, "Zero-bit FreeMap is invalid");
 
@@ -37,12 +38,16 @@ namespace Exi::TL
             {
                 Element e = m_Elements[i];
                 int bit   = FindFirstSet(e);
+                Index idx = (i * ElementBits) + bit;
 
                 if (bit < 0)
                     continue;
 
+                if (idx >= Bits)
+                    break;
+
                 m_Elements[i] &= ~(1ULL << bit);
-                return (i * ElementBits) + bit;
+                return idx;
             }
             return InvalidIndex;
         }
@@ -53,9 +58,47 @@ namespace Exi::TL
          */
         void Free(Index i)
         {
-            Element& e = m_Elements[i / ElementBits];
+            if (i == InvalidIndex)
+                return;
+            Element& e = m_Elements.at(i / ElementBits);
             int bit = i % ElementBits;
             e |= (1ULL << bit);
+        }
+
+        /**
+         * Check if a given index is free
+         * @param i
+         * @return True or false
+         */
+        [[nodiscard]] bool IsFree(Index i) const
+        {
+            if (i == InvalidIndex)
+                return false;
+            Element e = m_Elements.at(i / ElementBits);
+            int bit = i % ElementBits;
+            return e & (1ULL << bit);
+        }
+
+        [[nodiscard]] bool IsEmpty() const
+        {
+            for (int i = 0; i < Elements; i++)
+            {
+                Element e = m_Elements[i];
+                if (e != InvalidIndex)
+                    return false;
+            }
+            return true;
+        }
+
+        [[nodiscard]] bool IsFull() const
+        {
+            for (int i = 0; i < Elements; i++)
+            {
+                Element e = m_Elements[i];
+                if (e != 0)
+                    return false;
+            }
+            return true;
         }
     private:
         std::array<Element, Elements> m_Elements;

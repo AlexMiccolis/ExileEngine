@@ -16,7 +16,7 @@ bool Test_NumericMap_Find()
     int values[1];
     int count = map.Find(0, values, 1);
 
-    if (count == 0)
+    if (count != 1)
         return false;
 
     return values[0] == -1;
@@ -27,8 +27,10 @@ bool Test_NumericMap_GetKeys()
     Exi::TL::NumericMap<std::size_t, int> map;
 
     map.Emplace(1, 1);
+    map.Emplace(1, 3);
     map.Emplace(2, 4);
     map.Emplace(3, 5);
+    map.Emplace(3, 2);
     map.Emplace(0, -1);
 
     std::size_t keys[64];

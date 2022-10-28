@@ -8,6 +8,7 @@
 #include <array>
 
 #include <Exile/TL/ByteUtils.hpp>
+#include <Exile/TL/FreeMap.hpp>
 
 namespace Exi::TL
 {
@@ -70,36 +71,41 @@ namespace Exi::TL
         static constexpr int Columns = Y;
         static constexpr int Buckets = Rows * Columns;
 
-        struct BucketNode
+        static constexpr int KeysPerHead = 4;
+        static constexpr int ValuesPerHead = 8;
+
+        struct ValueNode
         {
             Key key;
             Value value;
-            BucketNode* next;
+            ValueNode* next;
 
-            BucketNode() = default;
-            BucketNode(Key _key) : key(_key), next(nullptr) { }
+            ValueNode() = default;
+            ValueNode(Key _key) : key(_key), next(nullptr) { }
         };
 
         struct KeyNode
         {
-            Key         key;
-            BucketNode* first;
-            KeyNode*    next;
-            std::size_t count;
+            Key           key;
+            std::uint32_t count;
+            ValueNode*    first;
         };
 
-        struct RowHead
+        struct alignas(64) RowHead
         {
-            BucketNode* bucketNode = nullptr;
-            KeyNode*    keyNode    = nullptr;
+            KeyNode keys[KeysPerHead];
+            ValueNode values[ValuesPerHead];
+            FreeMap<KeysPerHead, uint16_t> freeKeys;
+            FreeMap<ValuesPerHead, uint16_t> freeValues;
+            RowHead* next;
+
+            RowHead() : next(nullptr) { }
         };
 
         using RowType    = std::array<RowHead, Rows>;
         using BucketPos  = uint32_t;
 
-        static constexpr int MaxMemory = (sizeof(RowType*) * Columns) + ((sizeof(RowHead) * Rows) * Columns);
-
-        NumericMap() : m_BucketColumns { nullptr } { }
+        NumericMap() : m_Keys(0), m_BucketColumns { nullptr } { }
         ~NumericMap()
         {
             for (int c = 0; c < Columns; c++)
@@ -111,8 +117,13 @@ namespace Exi::TL
 
                 for (int r = 0; r < Rows; r++)
                 {
-                    RowHead& row = (*col)[r];
-                    DestroyBucketList(row);
+                    auto* row = col->at(r).next;
+                    while (row != nullptr)
+                    {
+                        auto* lastRow = row;
+                        row = row->next;
+                        delete lastRow;
+                    }
                 }
 
                 delete col;
@@ -132,7 +143,7 @@ namespace Exi::TL
          */
         Value& Emplace(Key key, Value value)
         {
-            BucketNode* node = InsertEmpty(key);
+            ValueNode* node = InsertNode(key);
             node->value = value;
             return node->value;
         }
@@ -144,7 +155,7 @@ namespace Exi::TL
          */
         bool Contains(Key key) const
         {
-            return FindFirst(key) != nullptr;
+            return FindKey(key) != nullptr;
         }
 
         /**
@@ -169,21 +180,20 @@ namespace Exi::TL
          */
         std::size_t Find(Key key, Value* values, std::size_t maxValues) const
         {
-            auto keyNode = FindKey(key);
-            std::size_t i;
-            BucketNode* node;
+            const KeyNode* keyNode = FindKey(key);
+            std::size_t count;
 
             if (!keyNode)
                 return 0;
 
-            node = keyNode->first;
-            for (i = 0; i < maxValues && i < keyNode->count; i++)
+            ValueNode* node = keyNode->first;
+            for (count = 0; count < maxValues && count < keyNode->count; count++)
             {
-                values[i] = node->value;
+                values[count] = node->value;
                 node = node->next;
             }
 
-            return i;
+            return keyNode->count;
         }
 
         /**
@@ -205,15 +215,8 @@ namespace Exi::TL
 
                 for (int r = 0; r < Rows; r++)
                 {
-                    RowHead& row = (*colPtr)[r];
-                    KeyNode* keyNode = row.keyNode;
-                    while (keyNode != nullptr)
-                    {
-                        if (count < maxKeys)
-                            keys[count] = keyNode->key;
-                        keyNode = keyNode->next;
-                        ++count;
-                    }
+                    RowHead* row = &(*colPtr)[r];
+                    GetRowKeys(row, keys, maxKeys, count);
                 }
             }
             return count;
@@ -223,7 +226,7 @@ namespace Exi::TL
          * Get the number of keys in the map
          * @return Key count
          */
-        [[nodiscard]] std::size_t GetKeys() const { return GetKeys(nullptr, 0); }
+        [[nodiscard]] std::size_t GetKeys() const { return m_Keys; }
 
         /**
          * Expand the map to it's maximum capacity.
@@ -234,7 +237,7 @@ namespace Exi::TL
             for (int i = 0; i < Columns; i++)
             {
                 if (!m_BucketColumns[i])
-                    m_BucketColumns[i] = new RowType { };
+                    m_BucketColumns[i] = new RowType();
             }
         }
 
@@ -255,7 +258,7 @@ namespace Exi::TL
 
                 for (int r = 0; r < Rows; r++)
                 {
-                    if (row->at(r).bucketNode != nullptr)
+                    if (!row->at(r).freeValues.IsEmpty())
                     {
                         empty = false;
                         break;
@@ -271,92 +274,96 @@ namespace Exi::TL
             }
             return freed;
         }
+
     private:
-        /**
-         * Insert an empty node for the given key
-         * @param key
-         * @return Pointer to empty node
-         */
-        BucketNode* InsertEmpty(Key key)
+        void GetRowKeys(RowHead* row, Key* keys, std::size_t maxKeys, std::size_t& count) const
         {
-            BucketPos    pos = GetBucket(key);
-            RowHead&     row = GetRow(pos)->at(LowWord(pos) % Rows);
-            BucketNode** bucket = &row.bucketNode;
-            BucketNode*  current = *bucket;
-            BucketNode*  node = new BucketNode(key);
-            bool newKey = (current == nullptr) || ((current->key != key) && (current->next == nullptr));
-
-            // Check if we can push the node onto the front of the list
-            if (newKey)
+            do
             {
-                PushHead(bucket, node);
-                PushKey(row, node, key);
-                return node;
-            }
+                for (int k = 0; k < KeysPerHead; k++)
+                {
+                    if (row->freeKeys.IsFree(k))
+                        continue;
 
-            // Try to find the first value via the key list
-            auto* keyNode = FindKey(key);
-            if (keyNode != nullptr)
-            {
-                // Append node after the key's first value
-                node->next = keyNode->first->next;
-                keyNode->first->next = node;
-                keyNode->count++;
-                return node;
-            }
-
-            // Insert value at the front of the list
-            PushHead(bucket, node);
-            PushKey(row, node, key);
-            return node;
+                    if (count < maxKeys)
+                        keys[count] = row->keys[k].key;
+                    ++count;
+                }
+                row = row->next;
+            } while (row != nullptr);
         }
 
-        void PushHead(BucketNode** bucket, BucketNode* node)
-        {
-            // Save next node pointer if it exists
-            node->next = *bucket;
-            *bucket = node;
-        }
-
-        /**
-         * Push a key onto the front of a row's key list
-         * @param head
-         * @param node
-         * @param key
-         */
-        void PushKey(RowHead& head, BucketNode* node, Key key)
-        {
-            auto keyNode = new KeyNode { };
-            keyNode->key   = key;
-            keyNode->next  = head.keyNode;
-            keyNode->first = node;
-            keyNode->count = 1;
-            head.keyNode  = keyNode;
-        }
-
-        /**
-         * Find the node for a given key
-         * @param key
-         * @return Key node pointer if found, nullptr otherwise
-         */
-        KeyNode* FindKey(Key key) const
+        ValueNode* InsertNode(Key key)
         {
             BucketPos pos = GetBucket(key);
-            RowType*  row = m_BucketColumns[HighWord(pos) % Columns];
+            RowHead&  row = GetRow(pos)->at(LowWord(pos) % Rows);
+            ValueNode* valueNode;
+            KeyNode* keyNode;
 
-            if (!row)
-                return nullptr;
-
-            KeyNode* current = row->at(LowWord(pos) % Rows).keyNode;
-
-            while (current != nullptr)
+            // Allocate key if key list is empty or if we cant find our node
+            if (row.freeKeys.IsEmpty() || !(keyNode = FindKey(row, key)))
             {
-                if (current->key == key)
-                    return current;
-                current = current->next;
+                keyNode = AllocateKey(row);
+                keyNode->key = key;
+                keyNode->count = 0;
+                m_Keys++;
             }
 
-            return nullptr;
+            valueNode = AllocateValue(row);
+            valueNode->key = key;
+
+            valueNode->next = keyNode->first;
+            keyNode->first = valueNode;
+            keyNode->count++;
+            return valueNode;
+        }
+
+        KeyNode* FindKey(RowHead& row, Key key) const
+        {
+            for (int i = 0; i < KeysPerHead; i++)
+            {
+                if (row.keys[i].key == key)
+                    if (!row.freeKeys.IsFree(i))
+                        return &row.keys[i];
+            }
+
+            if (row.next == nullptr)
+                return nullptr;
+            return FindKey(*row.next, key);
+        }
+
+        const KeyNode* FindKey(Key key) const
+        {
+            auto  pos = GetBucket(key);
+            auto* row = m_BucketColumns[HighWord(pos) % Columns];
+            auto& rowHead = row->at(LowWord(pos) % Rows);
+            return FindKey(rowHead, key);
+        }
+
+        KeyNode* AllocateKey(RowHead& row)
+        {
+            int idx = row.freeKeys.Allocate();
+            if (idx != row.freeKeys.InvalidIndex)
+            {
+                KeyNode* node = &row.keys[idx];
+                return node;
+            }
+            if (!row.next)
+                row.next = new RowHead();
+            return AllocateKey(*row.next);
+        }
+
+        ValueNode* AllocateValue(RowHead& row)
+        {
+            int idx = row.freeValues.Allocate();
+            if (idx != row.freeValues.InvalidIndex)
+            {
+                ValueNode* node = &row.values[idx];
+                return node;
+            }
+            if (!row.next)
+                row.next = new RowHead();
+            return AllocateValue(*row.next);
         }
 
         /**
@@ -368,29 +375,13 @@ namespace Exi::TL
         {
             RowType* row = m_BucketColumns[HighWord(pos) % Columns];
             if (!row)
+            {
                 row = m_BucketColumns[HighWord(pos) % Columns] = new RowType { };
+            }
             return row;
         }
 
-        void DestroyBucketList(RowHead& row)
-        {
-            BucketNode* node = row.bucketNode;
-            KeyNode* keyNode = row.keyNode;
-            while (node != nullptr)
-            {
-                BucketNode* lastNode = node;
-                node = node->next;
-                delete lastNode;
-            }
-
-            while (keyNode != nullptr)
-            {
-                KeyNode* lastNode = keyNode;
-                keyNode = keyNode->next;
-                delete lastNode;
-            }
-        }
-
+        std::size_t m_Keys;
         std::array<RowType*, Columns> m_BucketColumns;
     };
 

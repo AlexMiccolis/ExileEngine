@@ -15,6 +15,7 @@ Exi::Unit::BenchmarkResults Benchmark_NumericMap_Find()
         map.Emplace(1, i);
         map.Emplace(2, i);
         map.Emplace(3, i);
+        map.Emplace(4, i);
     }
 
     BENCHMARK_START(NumericMap_Find, 65536 * 16);
@@ -33,7 +34,6 @@ Exi::Unit::BenchmarkResults Benchmark_NumericMap_GetKeys()
 {
     constexpr std::size_t count = 8;
     Exi::TL::NumericMap<std::size_t, int> map;
-
     for (auto i = 0; i < count; i++)
     {
         map.Emplace(0, i);
