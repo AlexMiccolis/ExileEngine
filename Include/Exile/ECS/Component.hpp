@@ -10,6 +10,7 @@ namespace Exi::ECS
     {
     public:
         Component();
+        virtual ~Component();
 
         virtual void OnAttached(class Entity& entity);
 

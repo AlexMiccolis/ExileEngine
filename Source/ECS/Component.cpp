@@ -10,6 +10,11 @@ namespace Exi::ECS
 
     }
 
+    Component::~Component()
+    {
+
+    }
+
     void Component::OnAttached(Entity& entity)
     {
         m_Entity = &entity;

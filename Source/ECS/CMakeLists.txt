@@ -9,4 +9,5 @@ target_sources(ExileECS PRIVATE
         Entity.cpp
         Component.cpp
         System.cpp
+        EntityManager.cpp
         )

@@ -12,7 +12,8 @@ namespace Exi::ECS
     {
     public:
         Entity();
-        ~Entity();
+        Entity(const std::string_view& name);
+        virtual ~Entity();
 
         /**
          * Get the first component with the given type
@@ -91,9 +92,15 @@ namespace Exi::ECS
             return GetComponentCount(C::Static::Id);
         }
 
+        /**
+         * Get the name of the entity. Entity names are not guaranteed to be unique.
+         * @return
+         */
+        const std::string& GetName() const { return m_Name; }
     private:
         Component* m_RootComponent;
         TL::NumericMap<Reflect::ClassId, class Component*> m_ComponentMap;
+        std::string m_Name;
     };
 
 }

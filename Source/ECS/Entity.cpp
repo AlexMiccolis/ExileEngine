@@ -10,6 +10,12 @@ namespace Exi::ECS
 
     }
 
+    Entity::Entity(const std::string_view& name)
+            : m_RootComponent(nullptr), m_Name(name)
+    {
+
+    }
+
     Entity::~Entity()
     {
 

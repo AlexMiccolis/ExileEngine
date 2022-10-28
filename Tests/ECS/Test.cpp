@@ -3,6 +3,7 @@
 #include <Exile/Unit/Test.hpp>
 #include <Exile/ECS/Component.hpp>
 #include <Exile/ECS/Entity.hpp>
+#include <Exile/ECS/EntityManager.hpp>
 
 extern bool Benchmark();
 
@@ -56,13 +57,31 @@ bool Test_EntityComponentSearch()
     return count == 2;
 }
 
+bool Test_EntityManagerGetEntity()
+{
+    constexpr int count = 64;
+    Exi::ECS::EntityManager manager;
+
+    auto entity = std::make_unique<Exi::ECS::Entity>();
+    entity->AttachComponent(std::make_unique<PositionComponent>());
+
+    auto id = manager.AddEntity(std::move(entity));
+
+    for (int i = 0; i < count; i++)
+        manager.AddEntity(std::make_unique<Exi::ECS::Entity>());
+
+    auto* e = manager.GetEntity(id);
+    return e->GetComponentCount<PositionComponent>() == 1;
+}
+
 int main(int argc, const char** argv)
 {
     const Exi::Unit::Tests tests({
         { "Benchmark", Benchmark },
         { "ComponentConstruction", Test_ComponentConstruction },
         { "EntityConstruction", Test_EntityConstruction },
-        { "EntityComponentSearch", Test_EntityComponentSearch }
+        { "EntityComponentSearch", Test_EntityComponentSearch },
+        { "EntityManagerGetEntity", Test_EntityManagerGetEntity }
     });
 
     return tests.Execute(argc, argv);
