@@ -2,6 +2,8 @@
 #include <Exile/TL/NumericMap.hpp>
 #include <Exile/TL/FreeMap.hpp>
 #include <Exile/TL/ByteUtils.hpp>
+#include <Exile/TL/UUID.hpp>
+#include <unordered_set>
 
 extern bool Benchmark();
 
@@ -84,6 +86,17 @@ int main(int argc, const char** argv)
 
     tests.Add("ByteUtils_FindFirstSet", []{
         return Exi::TL::FindFirstSet(0xfff0) == 4;
+    });
+
+    tests.Add("UUID_Random", []{
+        std::unordered_set<Exi::TL::UUID> uuidSet;
+        for (int i = 0; i < 65536; i++)
+        {
+            auto pair = uuidSet.emplace(Exi::TL::UUID::Random());
+            if (!pair.second)
+                return false;
+        }
+        return true;
     });
 
     return tests.Execute(argc, argv);

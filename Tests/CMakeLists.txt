@@ -8,6 +8,7 @@ add_test(NAME "[TL] NumericMap::Contract"           COMMAND TLTest NumericMap_Co
 add_test(NAME "[TL] FreeMap::Allocate"              COMMAND TLTest FreeMap_Allocate)
 add_test(NAME "[TL] ByteUtils::PopCount"            COMMAND TLTest ByteUtils_PopCount)
 add_test(NAME "[TL] ByteUtils::FindFirstSet"        COMMAND TLTest ByteUtils_FindFirstSet)
+add_test(NAME "[TL] UUID::Random"                   COMMAND TLTest UUID_Random)
 
 add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp)
 target_link_libraries(ReflectTest ExileReflect)
