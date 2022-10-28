@@ -7,7 +7,6 @@ target_sources(ExileReflect PUBLIC
         ${INCLUDE_SUBDIR}/Reflection.hpp
         )
 target_sources(ExileReflect PRIVATE
-        ${INCLUDE_SUBDIR}/Impl/Type.hpp
         ${INCLUDE_SUBDIR}/Impl/Invoke.hpp
         ${INCLUDE_SUBDIR}/Impl/ClassRegistry.hpp
         ClassRegistry.cpp
