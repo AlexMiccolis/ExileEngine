@@ -1,4 +1,5 @@
 #include <Exile/Runtime/LuaContext.hpp>
+#include <Exile/Runtime/Logger.hpp>
 
 namespace Exi::Runtime
 {
@@ -29,6 +30,7 @@ namespace Exi::Runtime
         if (luaL_dostring(m_Lua, str.c_str()))
         {
             const char* err = lua_tostring(m_Lua, -1);
+            Logger::GetLogger("Lua").Error(err);
             return false;
         }
         return true;
@@ -39,6 +41,7 @@ namespace Exi::Runtime
         if (luaL_loadstring(m_Lua, str.c_str()))
         {
             const char* err = lua_tostring(m_Lua, -1);
+            Logger::GetLogger("Lua").Error(err);
             return false;
         }
         return lua_dump(m_Lua, BytecodeVectorWriter, &bytecodeOut) == 0;
@@ -49,6 +52,7 @@ namespace Exi::Runtime
         if (luaL_loadfile(m_Lua, path.c_str()))
         {
             const char* err = lua_tostring(m_Lua, -1);
+            Logger::GetLogger("Lua").Error(err);
             return false;
         }
         return lua_dump(m_Lua, BytecodeVectorWriter, &bytecodeOut) == 0;

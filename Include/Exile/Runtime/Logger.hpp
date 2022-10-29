@@ -3,6 +3,7 @@
 #include <Exile/Runtime/API.hpp>
 #include <string>
 #include <array>
+#include <cstdarg>
 
 namespace Exi::Runtime
 {
@@ -73,11 +74,16 @@ namespace Exi::Runtime
 
         static Logger& GetLogger(const std::string& name);
 
+        void Debug(const char* fmt, ...);
+        void Info(const char* fmt, ...);
+        void Warn(const char* fmt, ...);
+        void Error(const char* fmt, ...);
+        void Fatal(const char* fmt, ...);
         void Log(Level level, const char* fmt, ...);
+        void Log(Level level, const char* fmt, va_list args);
     private:
         Logger(const std::string& name = "");
         ~Logger();
-
 
         std::string m_Name;
         std::string m_OutputPath;

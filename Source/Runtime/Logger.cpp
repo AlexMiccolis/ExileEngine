@@ -2,24 +2,72 @@
 #include <unordered_map>
 #include <utility>
 #include <cstdarg>
+#include <mutex>
 #include <ctime>
 
 namespace Exi::Runtime
 {
     static std::unordered_map<std::string, Logger*> s_Loggers;
+    static std::mutex s_LoggersMutex;
 
     Logger& Logger::GetLogger(const std::string& name)
     {
+        std::unique_lock lock(s_LoggersMutex);
         if (!s_Loggers.contains(name))
             s_Loggers.emplace(name, new Logger(name));
         return *s_Loggers.at(name);
+    }
+
+    void Logger::Debug(const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        Log(LevelDebug, fmt, args);
+        va_end(args);
+    }
+
+    void Logger::Info(const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        Log(LevelInfo, fmt, args);
+        va_end(args);
+    }
+
+    void Logger::Warn(const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        Log(LevelWarning, fmt, args);
+        va_end(args);
+    }
+
+    void Logger::Error(const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        Log(LevelError, fmt, args);
+        va_end(args);
+    }
+
+    void Logger::Fatal(const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        Log(LevelFatal, fmt, args);
+        va_end(args);
     }
 
     void Logger::Log(Level level, const char* fmt, ...)
     {
         va_list args;
         va_start(args, fmt);
+        Log(level, fmt, args);
+        va_end(args);
+    }
 
+    void Logger::Log(Level level, const char* fmt, va_list args)
+    {
         // Write line content into line buffer
         vsnprintf(m_LineBuffer.data(), m_LineBuffer.size(), fmt, args);
 
@@ -45,6 +93,11 @@ namespace Exi::Runtime
                 break;
         }
 
+        printf("%s[%s%s%5s%s%s]%s ",
+               bracketColor, ColorCodes[Reset],
+               tagColor, m_Name.c_str(), ColorCodes[Reset],
+               bracketColor, ColorCodes[Reset]);
+
         printf("%s[%s%s%s%s%s]%s %s%s%s\n",
                bracketColor, ColorCodes[Reset],
                tagColor, LevelPrefixes[level], ColorCodes[Reset],
@@ -52,8 +105,6 @@ namespace Exi::Runtime
                messageColor, m_LineBuffer.data(), ColorCodes[Reset]);
         if (m_OutputFile)
             fprintf(m_OutputFile, "[%s] %s\n", LevelPrefixes[level], m_LineBuffer.data());
-
-        va_end(args);
     }
 
     Logger::Logger(const std::string& name)
@@ -65,7 +116,7 @@ namespace Exi::Runtime
 
         localtime_s(&tm, &time);
         std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d_%I-%M-%S%p", &tm);
-        m_OutputPath = "Exile_" + name + "_" + timeBuf + ".log";
+        m_OutputPath = "Exile_" + name + ".log";
         m_OutputFile = fopen(m_OutputPath.c_str(), "w");
     }
 
