@@ -1,6 +1,6 @@
 add_library(ExileReflect STATIC)
 set(INCLUDE_SUBDIR ${PROJECT_SOURCE_DIR}/Include/Exile/Reflect)
-target_link_libraries(ExileReflect liblua-static)
+target_link_libraries(ExileReflect luajit-static)
 target_include_directories(ExileReflect PUBLIC ${PROJECT_SOURCE_DIR}/Include)
 target_sources(ExileReflect PUBLIC
         ${INCLUDE_SUBDIR}/Compiler.hpp
