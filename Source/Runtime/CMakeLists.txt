@@ -5,9 +5,11 @@ target_link_libraries(ExileRuntime luajit-static)
 target_include_directories(ExileRuntime PUBLIC ${PROJECT_SOURCE_DIR}/Include)
 target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/API.hpp
+        ${INCLUDE_SUBDIR}/Logger.hpp
         ${INCLUDE_SUBDIR}/LuaContext.hpp
         )
 target_sources(ExileRuntime PRIVATE
+        Logger.cpp
         LuaContext.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
