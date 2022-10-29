@@ -10,13 +10,19 @@ add_test(NAME "[TL] ByteUtils::PopCount"            COMMAND TLTest ByteUtils_Pop
 add_test(NAME "[TL] ByteUtils::FindFirstSet"        COMMAND TLTest ByteUtils_FindFirstSet)
 add_test(NAME "[TL] UUID::Random"                   COMMAND TLTest UUID_Random)
 
+add_executable(RuntimeTest Runtime/Test.cpp)
+target_link_libraries(RuntimeTest ExileRuntime)
+
+add_test(NAME "[Runtime] LuaContext::ExecuteString"     COMMAND RuntimeTest LuaContext_ExecuteString)
+add_test(NAME "[Runtime] LuaContext::SetGlobalFunction" COMMAND RuntimeTest LuaContext_SetGlobalFunction)
+
 add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp)
 target_link_libraries(ReflectTest ExileReflect)
 
-add_test(NAME "[Reflect] _ Reflection Benchmark _" COMMAND ReflectTest Benchmark)
-add_test(NAME "[Reflect] StaticInitialize"         COMMAND ReflectTest StaticInitialize)
-add_test(NAME "[Reflect] Field Get"                COMMAND ReflectTest FieldGet)
-add_test(NAME "[Reflect] Field Set"                COMMAND ReflectTest FieldSet)
+add_test(NAME "[Reflect] _ Reflection Benchmark _"  COMMAND ReflectTest Benchmark)
+add_test(NAME "[Reflect] StaticInitialize"          COMMAND ReflectTest StaticInitialize)
+add_test(NAME "[Reflect] Field Get"                 COMMAND ReflectTest FieldGet)
+add_test(NAME "[Reflect] Field Set"                 COMMAND ReflectTest FieldSet)
 
 add_executable(ECSTest ECS/Test.cpp ECS/Benchmark.cpp)
 target_link_libraries(ECSTest ExileReflect ExileECS)
@@ -26,3 +32,6 @@ add_test(NAME "[ECS] Component Construction"      COMMAND ECSTest ComponentConst
 add_test(NAME "[ECS] Entity Construction"         COMMAND ECSTest EntityConstruction)
 add_test(NAME "[ECS] Entity Component Search"     COMMAND ECSTest EntityComponentSearch)
 add_test(NAME "[ECS] EntityManager::GetEntity"    COMMAND ECSTest EntityManagerGetEntity)
+
+set_target_properties(TLTest RuntimeTest ReflectTest ECSTest
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
