@@ -16,7 +16,6 @@ namespace Exi::Runtime
     {
         m_Lua = luaL_newstate();
         luaL_openlibs(m_Lua);
-        luaopen_jit(m_Lua);
     }
 
     LuaContext::~LuaContext()
