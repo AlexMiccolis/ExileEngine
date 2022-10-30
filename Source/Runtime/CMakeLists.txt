@@ -7,10 +7,12 @@ target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/API.hpp
         ${INCLUDE_SUBDIR}/Logger.hpp
         ${INCLUDE_SUBDIR}/LuaContext.hpp
+        ${INCLUDE_SUBDIR}/Filesystem.hpp
         )
 target_sources(ExileRuntime PRIVATE
         Logger.cpp
         LuaContext.cpp
+        Filesystem.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
 set_target_properties(ExileRuntime PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

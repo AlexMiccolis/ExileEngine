@@ -15,6 +15,8 @@ target_link_libraries(RuntimeTest ExileRuntime)
 
 add_test(NAME "[Runtime] LuaContext::ExecuteString"     COMMAND RuntimeTest LuaContext_ExecuteString)
 add_test(NAME "[Runtime] LuaContext::SetGlobalFunction" COMMAND RuntimeTest LuaContext_SetGlobalFunction)
+add_test(NAME "[Runtime] PathUtils::GetFirstFragment"   COMMAND RuntimeTest PathUtils_GetFirstFragment)
+add_test(NAME "[Runtime] PathUtils::StripSeparators"    COMMAND RuntimeTest PathUtils_StripSeparators)
 
 add_executable(ReflectTest Reflect/Test.cpp Reflect/Benchmark.cpp)
 target_link_libraries(ReflectTest ExileReflect)
