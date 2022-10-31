@@ -1,7 +1,8 @@
-#include <iostream>
 #include <Exile/Unit/Test.hpp>
 #include <Exile/Runtime/LuaContext.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
+
+extern bool Benchmark();
 
 bool Test_LuaContext_ExecuteString()
 {
@@ -26,13 +27,13 @@ bool Test_PathUtils_GetFirstFragment()
 {
     const std::string path = "/\\a////b\\/c/";
     std::size_t index = 0;
-    auto fragment = Exi::Runtime::PathUtils::GetFirstFragment(path, index);
+    auto fragment = Exi::Runtime::PathUtils::GetNextFragment(path, index);
     std::vector<std::string_view> fragments;
 
     while (!fragment.empty())
     {
         fragments.push_back(fragment);
-        fragment = Exi::Runtime::PathUtils::GetFirstFragment(path, index);
+        fragment = Exi::Runtime::PathUtils::GetNextFragment(path, index);
     }
 
     if (fragments.size() != 3)
@@ -66,20 +67,9 @@ int main(int argc, const char** argv)
         { "LuaContext_ExecuteString", Test_LuaContext_ExecuteString },
         { "LuaContext_SetGlobalFunction", Test_LuaContext_SetGlobalFunction },
         { "PathUtils_GetFirstFragment", Test_PathUtils_GetFirstFragment },
-        { "PathUtils_StripSeparators", Test_PathUtils_StripSeparators }
+        { "PathUtils_StripSeparators", Test_PathUtils_StripSeparators },
+        { "Benchmark", Benchmark }
     });
-
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
-
-    Exi::Runtime::Path translated;
-    if (fs.TranslatePath("Entities/Objects/kekker.lua", translated))
-    {
-        std::cout << translated << std::endl;
-    }
-    else
-    {
-        std::cout << "Translation failed" << std::endl;
-    }
 
     return tests.Execute(argc, argv);
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Exile/Runtime/API.hpp>
+#include <Exile/Runtime/Logger.hpp>
+#include <Exile/TL/LRUCache.hpp>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -20,7 +22,7 @@ namespace Exi::Runtime
          * @param index Reference to index, used to store state across calls
          * @return String view of fragment if found, empty string view otherwise
          */
-        static inline std::string_view GetFirstFragment(const std::string_view& path, std::size_t& index)
+        static inline std::string_view GetNextFragment(const std::string_view& path, std::size_t& index)
         {
             // Find first character that isn't a directory separator
             std::size_t start = path.find_first_not_of("\\/", index);
@@ -49,7 +51,29 @@ namespace Exi::Runtime
         static inline std::string_view StripSeparators(const std::string_view& path)
         {
             std::size_t index = 0;
-            return GetFirstFragment(path, index);
+            return GetNextFragment(path, index);
+        }
+
+        /**
+         * Split a path into a vector of fragments
+         * @param path
+         * @param fragmentsOut
+         * @return Number of fragments in the path
+         */
+        static inline int SplitPath(const std::string& path, std::vector<std::string_view>& fragmentsOut)
+        {
+            int count = 0;
+            std::size_t index = 0;
+            auto fragment = GetNextFragment(path, index);
+
+            fragmentsOut.reserve(16);
+            while (!fragment.empty())
+            {
+                fragmentsOut.push_back(fragment);
+                fragment = GetNextFragment(path, index);
+            }
+
+            return fragmentsOut.size();
         }
 
     }
@@ -57,15 +81,22 @@ namespace Exi::Runtime
     class RUNTIME_API VfsNode
     {
     public:
-        VfsNode(std::string name, std::string target);
+        enum MountType
+        {
+            DirectoryMount,
+            FileMount
+        };
 
-        VfsNode* CreateChild(const std::string& name, const std::string& target);
+        VfsNode(MountType type, std::string name, std::string target);
+
+        VfsNode* CreateChild(MountType type, const std::string_view& name, const std::string_view& target);
         VfsNode* FindChildByName(const std::string_view& name);
 
         [[nodiscard]] const std::string& GetName() const { return m_Name; }
         [[nodiscard]] const std::string& GetTarget() const { return m_Target; }
         [[nodiscard]] bool HasChildren() const { return !m_Children.empty(); }
     private:
+        MountType m_Type;
         std::string m_Name;
         std::string m_Target;
         std::vector<std::unique_ptr<VfsNode>> m_Children;
@@ -78,6 +109,14 @@ namespace Exi::Runtime
         ~Filesystem();
 
         /**
+         * Mount a directory at the specified virtual path
+         * @param directory
+         * @param virtualPath
+         * @return True if the directory was successfully mounted, false otherwise
+         */
+        bool MountDirectory(const Path& directory, const Path& virtualPath);
+
+        /**
          * Translate a virtual path to a physical path
          * @param virtualPath Virtual path to translate
          * @param physicalPath Reference to path that will contain the physical path
@@ -85,9 +124,19 @@ namespace Exi::Runtime
          */
         bool TranslatePath(const Path& virtualPath, Path& physicalPath);
     private:
-        VfsNode* LastMatchingNode(const std::string& path, std::size_t& indexOut, bool allowRoot = false);
+        /**
+         * Return the VFS node that matches the most fragments of a path
+         * @param path
+         * @param indexOut
+         * @return
+         */
+        VfsNode& MatchPath(const std::string& path,
+                           const std::vector<std::string_view>& fragments,
+                           std::size_t& indexOut);
 
         VfsNode m_Vfs;
+        Logger& m_Logger;
+        TL::LRUCache<std::string, Path> m_TranslationCache;
     };
 
 }

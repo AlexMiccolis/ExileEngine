@@ -10,9 +10,10 @@ add_test(NAME "[TL] ByteUtils::PopCount"            COMMAND TLTest ByteUtils_Pop
 add_test(NAME "[TL] ByteUtils::FindFirstSet"        COMMAND TLTest ByteUtils_FindFirstSet)
 add_test(NAME "[TL] UUID::Random"                   COMMAND TLTest UUID_Random)
 
-add_executable(RuntimeTest Runtime/Test.cpp)
+add_executable(RuntimeTest Runtime/Test.cpp Runtime/Benchmark.cpp)
 target_link_libraries(RuntimeTest ExileRuntime)
 
+add_test(NAME "[Runtime] _ Runtime Benchmark _"         COMMAND RuntimeTest Benchmark)
 add_test(NAME "[Runtime] LuaContext::ExecuteString"     COMMAND RuntimeTest LuaContext_ExecuteString)
 add_test(NAME "[Runtime] LuaContext::SetGlobalFunction" COMMAND RuntimeTest LuaContext_SetGlobalFunction)
 add_test(NAME "[Runtime] PathUtils::GetFirstFragment"   COMMAND RuntimeTest PathUtils_GetFirstFragment)

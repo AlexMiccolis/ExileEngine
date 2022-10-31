@@ -5,17 +5,16 @@ namespace Exi::Runtime
 {
     #pragma region VfsNode
 
-    VfsNode::VfsNode(std::string name, std::string target)
-        : m_Name(std::move(name)), m_Target(std::move(target))
+    VfsNode::VfsNode(MountType type, std::string name, std::string target)
+        : m_Type(type), m_Name(std::move(name)), m_Target(std::move(target))
     {
 
     }
 
-    VfsNode* VfsNode::CreateChild(const std::string& name, const std::string& target)
+    VfsNode* VfsNode::CreateChild(MountType type, const std::string_view& name, const std::string_view& target)
     {
-        auto nameFragment = PathUtils::StripSeparators(name);
         return m_Children.emplace_back(
-            std::make_unique<VfsNode>(std::string(nameFragment), target)
+            std::make_unique<VfsNode>(type, std::string(name), std::string(target))
         ).get();
     }
 
@@ -35,12 +34,10 @@ namespace Exi::Runtime
     #pragma region Filesystem
 
     Filesystem::Filesystem(const Path& rootTarget)
-        : m_Vfs("/", rootTarget.string())
+        : m_Vfs(VfsNode::DirectoryMount, "/", rootTarget.string()),
+          m_Logger(Logger::GetLogger("Filesystem")), m_TranslationCache(1024)
     {
-        auto* lua = m_Vfs.CreateChild("Lua", m_Vfs.GetTarget() + "/Lua");
 
-        auto* entities = m_Vfs.CreateChild("Entities", m_Vfs.GetTarget() + "/Entities");
-        entities->CreateChild("Objects", m_Vfs.GetTarget() + "/Entities/Objects");
     }
 
     Filesystem::~Filesystem()
@@ -48,48 +45,91 @@ namespace Exi::Runtime
 
     }
 
-    bool Filesystem::TranslatePath(const Path& virtualPath, Path& physicalPath)
+    bool Filesystem::MountDirectory(const Path& directory, const Path& virtualPath)
     {
-        std::size_t startIndex;
+        std::string dir = directory.string();
         std::string path = virtualPath.string();
-        VfsNode* endNode = LastMatchingNode(path, startIndex, true);
-
-        if (!endNode)
+        if (!std::filesystem::is_directory(directory))
         {
+            m_Logger.Warn("Attempted to mount non-directory '%s'", dir.c_str());
             return false;
         }
 
-        physicalPath = endNode->GetTarget() + path.substr(startIndex);
-        physicalPath = physicalPath.make_preferred();
+        std::vector<std::string_view> fragments;
+        PathUtils::SplitPath(path, fragments);
+
+        std::size_t endIndex;
+        VfsNode& endNode = MatchPath(path, fragments, endIndex);
+
+        // Some part of the path doesn't exist
+        if (endIndex < (fragments.size() - 1))
+        {
+            m_Logger.Warn("Virtual path '%s' does not exist", path.c_str());
+            return false;
+        }
+
+        // Create new child node and clear the TLB
+        endNode.CreateChild(VfsNode::DirectoryMount, fragments[endIndex], dir);
+        m_TranslationCache.Clear();
         return true;
     }
 
-    VfsNode* Filesystem::LastMatchingNode(const std::string& path, std::size_t& indexOut, bool allowRoot)
+    bool Filesystem::TranslatePath(const Path& virtualPath, Path& physicalPath)
+    {
+        std::string path = virtualPath.string();
+
+        if (m_TranslationCache.Contains(path))
+        {
+            physicalPath = m_TranslationCache.Get(path);
+            return true;
+        }
+
+        std::vector<std::string_view> fragments;
+        PathUtils::SplitPath(path, fragments);
+
+        std::size_t endIndex;
+        VfsNode& endNode = MatchPath(path, fragments, endIndex);
+
+        /*
+        std::size_t startIndex;
+        VfsNode& endNode = LastMatchingNode(path, startIndex);
+        */
+
+        physicalPath = endNode.GetTarget();
+        for (std::size_t i = endIndex; i < fragments.size(); i++)
+        {
+            physicalPath /= fragments[i];
+        }
+
+        //physicalPath = endNode.GetTarget() + path.substr(startIndex);
+
+        physicalPath = physicalPath.make_preferred();
+        m_TranslationCache.Put(path, physicalPath);
+        return true;
+    }
+
+    VfsNode& Filesystem::MatchPath(const std::string& path,
+                                   const std::vector<std::string_view>& fragments,
+                                   std::size_t& indexOut)
     {
         VfsNode* node = &m_Vfs;
 
         indexOut = 0;
 
-        if (!node->HasChildren())
-            return allowRoot ? node : nullptr;
-
-        std::size_t index = 0;
-        auto fragment = Exi::Runtime::PathUtils::GetFirstFragment(path, index);
-        while (!fragment.empty())
+        for (const auto& fragment : fragments)
         {
             if (!node->HasChildren())
-                break;
+                return *node;
 
             VfsNode* child = node->FindChildByName(fragment);
             if (child == nullptr)
                 break;
 
             node = child;
-            indexOut = index;
-            fragment = Exi::Runtime::PathUtils::GetFirstFragment(path, index);
+            ++indexOut;
         }
 
-        return node;
+        return *node;
     }
 
 #pragma endregion
