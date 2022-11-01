@@ -23,7 +23,7 @@ bool Test_LuaContext_SetGlobalFunction()
     return lua.ExecuteString("print(my_global())");
 }
 
-bool Test_PathUtils_GetFirstFragment()
+bool Test_PathUtils_GetNextFragment()
 {
     const std::string path = "/\\a////b\\/c/";
     std::size_t index = 0;
@@ -61,13 +61,57 @@ bool Test_PathUtils_StripSeparators()
     return true;
 }
 
+bool Test_Filesystem_MountDirectory()
+{
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
+    std::filesystem::create_directories("Test/1/2/3");
+
+    bool t1 = fs.MountDirectory("Test/1", "/Test1");
+    bool t2 = fs.MountDirectory("Test/1/2", "/Test1/Test2");
+    bool t3 = fs.MountDirectory("Test/1/2/3", "/Test1/Test2/Test3");
+    bool t4 = fs.MountDirectory("Test/1/2/3/4", "/Test1/Test2/Test3/Test4");
+
+    return (t1 && t2 && t3) && !t4;
+}
+
+bool Test_Filesystem_TranslatePath()
+{
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
+    std::filesystem::create_directories("Test/1/2/3");
+
+    bool t1 = fs.MountDirectory("Test/1", "/Test1");
+    bool t2 = fs.MountDirectory("Test/1/2", "/Test1/Test2");
+    bool t3 = fs.MountDirectory("Test/1/2/3", "/Test1/Test2/Test3");
+
+    if (!(t1 && t2 && t3))
+        return false;
+
+    Exi::Runtime::Path path1, path2, path3;
+    bool xlt1 = fs.TranslatePath("Test1/test.txt", path1);
+    bool xlt2 = fs.TranslatePath("Test1/Test2/test.txt", path2);
+    bool xlt3 = fs.TranslatePath("Test1/Test2/Test3/test.txt", path3);
+
+    if (path1 != "Test/1/test.txt")
+        return false;
+
+    if (path2 != "Test/1/2/test.txt")
+        return false;
+
+    if (path3 != "Test/1/2/3/test.txt")
+        return false;
+
+    return true;
+}
+
 int main(int argc, const char** argv)
 {
     Exi::Unit::Tests tests ({
         { "LuaContext_ExecuteString", Test_LuaContext_ExecuteString },
         { "LuaContext_SetGlobalFunction", Test_LuaContext_SetGlobalFunction },
-        { "PathUtils_GetFirstFragment", Test_PathUtils_GetFirstFragment },
+        { "PathUtils_GetNextFragment", Test_PathUtils_GetNextFragment },
         { "PathUtils_StripSeparators", Test_PathUtils_StripSeparators },
+        { "Filesystem_MountDirectory", Test_Filesystem_MountDirectory },
+        { "Filesystem_TranslatePath", Test_Filesystem_TranslatePath },
         { "Benchmark", Benchmark }
     });
 
