@@ -5,6 +5,10 @@
 #include <mutex>
 #include <ctime>
 
+#ifdef WIN32
+#define localtime_r localtime_s
+#endif
+
 namespace Exi::Runtime
 {
     static std::unordered_map<std::string, Logger*> s_Loggers;
@@ -114,7 +118,7 @@ namespace Exi::Runtime
         std::time_t time = std::time(nullptr);
         std::tm tm;
 
-        localtime_s(&tm, &time);
+        localtime_r(&tm, &time);
         std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d_%I-%M-%S%p", &tm);
         m_OutputPath = "Exile_" + name + ".log";
         m_OutputFile = fopen(m_OutputPath.c_str(), "w");
