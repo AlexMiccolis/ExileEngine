@@ -1,7 +1,7 @@
 add_library(ExileRuntime SHARED)
 set(INCLUDE_SUBDIR ${PROJECT_SOURCE_DIR}/Include/Exile/Runtime)
 target_compile_definitions(ExileRuntime PRIVATE EXI_BUILDING_RUNTIME)
-target_link_libraries(ExileRuntime luajit-static)
+target_link_libraries(ExileRuntime luajit-pic-static)
 target_include_directories(ExileRuntime PUBLIC ${PROJECT_SOURCE_DIR}/Include)
 target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/API.hpp
