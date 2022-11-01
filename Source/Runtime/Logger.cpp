@@ -6,7 +6,7 @@
 #include <ctime>
 
 #ifdef WIN32
-#define localtime_r localtime_s
+#define localtime_r(ti, tm) localtime_s(ti, tm)
 #endif
 
 namespace Exi::Runtime
@@ -115,9 +115,9 @@ namespace Exi::Runtime
         : m_Name(name)
     {
         char timeBuf[128];
-        std::time_t time = std::time(nullptr);
+        const std::time_t time = std::time(nullptr);
         std::tm tm;
-
+        
         localtime_r(&tm, &time);
         std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d_%I-%M-%S%p", &tm);
         m_OutputPath = "Exile_" + name + ".log";
