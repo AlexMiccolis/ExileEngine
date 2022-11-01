@@ -1,0 +1,12 @@
+add_executable(TLTest Test.cpp Benchmark.cpp)
+target_include_directories(TLTest PUBLIC ${PROJECT_SOURCE_DIR}/Include)
+
+add_test(NAME "[TL] _ Template Library Benchmark _" COMMAND TLTest Benchmark)
+add_test(NAME "[TL] NumericMap::Find"               COMMAND TLTest NumericMap_Find)
+add_test(NAME "[TL] NumericMap::GetKeys"            COMMAND TLTest NumericMap_GetKeys)
+add_test(NAME "[TL] NumericMap::Contract"           COMMAND TLTest NumericMap_Contract)
+add_test(NAME "[TL] FreeMap::Allocate"              COMMAND TLTest FreeMap_Allocate)
+add_test(NAME "[TL] ByteUtils::PopCount"            COMMAND TLTest ByteUtils_PopCount)
+add_test(NAME "[TL] ByteUtils::FindFirstSet"        COMMAND TLTest ByteUtils_FindFirstSet)
+add_test(NAME "[TL] UUID::Random"                   COMMAND TLTest UUID_Random)
+set_target_properties(TLTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

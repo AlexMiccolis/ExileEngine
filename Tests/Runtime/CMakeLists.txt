@@ -1,0 +1,11 @@
+add_executable(RuntimeTest Test.cpp Benchmark.cpp)
+target_link_libraries(RuntimeTest ExileRuntime)
+
+add_test(NAME "[Runtime] _ Runtime Benchmark _"         COMMAND RuntimeTest Benchmark)
+add_test(NAME "[Runtime] LuaContext::ExecuteString"     COMMAND RuntimeTest LuaContext_ExecuteString)
+add_test(NAME "[Runtime] LuaContext::SetGlobalFunction" COMMAND RuntimeTest LuaContext_SetGlobalFunction)
+add_test(NAME "[Runtime] PathUtils::GetNextFragment"    COMMAND RuntimeTest PathUtils_GetNextFragment)
+add_test(NAME "[Runtime] PathUtils::StripSeparators"    COMMAND RuntimeTest PathUtils_StripSeparators)
+add_test(NAME "[Runtime] Filesystem::MountDirectory"    COMMAND RuntimeTest Filesystem_MountDirectory)
+add_test(NAME "[Runtime] Filesystem::TranslatePath"     COMMAND RuntimeTest Filesystem_TranslatePath)
+set_target_properties(RuntimeTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
