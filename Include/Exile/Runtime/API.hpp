@@ -10,7 +10,11 @@
         #define RUNTIME_API __declspec(dllimport)
     #endif
 #else
-    #define RUNTIME_API
+    #ifdef __GNUC__
+        #define RUNTIME_API __attribute__((visibility("default")))
+    #else
+        #error Unsupported compiler!
+    #endif
 #endif
 
 namespace Exi::Runtime
