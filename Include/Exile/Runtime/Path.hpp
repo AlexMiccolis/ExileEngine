@@ -76,12 +76,7 @@ namespace Exi::Runtime
     {
     public:
         static constexpr char DirectorySeparator = '/';
-
-        #ifdef _WIN32
-            static constexpr char AltDirectorySeparator = '\\';
-        #else
-            static constexpr char AltDirectorySeparator = '/';
-        #endif
+        static constexpr char AltDirectorySeparator = '\\';
 
         Path();
         Path(const std::string& path);
