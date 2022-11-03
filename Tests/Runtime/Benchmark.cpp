@@ -1,5 +1,6 @@
 #include <Exile/Unit/Benchmark.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
+#include <filesystem>
 
 Exi::Unit::BenchmarkResults Benchmark_Filesystem_TranslatePath()
 {

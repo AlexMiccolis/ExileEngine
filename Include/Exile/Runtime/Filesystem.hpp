@@ -4,20 +4,18 @@
 #include <Exile/Runtime/Path.hpp>
 #include <Exile/Runtime/Logger.hpp>
 #include <Exile/TL/LRUCache.hpp>
+#include <cstddef>
 #include <list>
-#include <filesystem>
 #include <string>
-#include <vector>
 #include <memory>
+#include <atomic>
 #include <mutex>
 #include <shared_mutex>
 
 namespace Exi::Runtime
 {
 
-    /**
-     * Node within a Virtual Filesystem tree
-     */
+    /** Node within a Virtual Filesystem tree */
     class RUNTIME_API VfsNode
     {
     public:
@@ -42,57 +40,109 @@ namespace Exi::Runtime
         std::vector<std::unique_ptr<VfsNode>> m_Children;
     };
 
+    /** Shared control state for an open file */
+    class RUNTIME_API FileControl
+    {
+    public:
+        [[nodiscard]] const Path& GetVirtualPath() const { return m_VirtualPath; }
+        [[nodiscard]] const Path& GetPhysicalPath() const { return m_PhysicalPath; }
+        [[nodiscard]] size_t GetSize() const { return m_Size; }
+        [[nodiscard]] bool IsOpen() const { return m_Readable; }
+        [[nodiscard]] bool IsWritable() const { return m_Writable; }
+        [[nodiscard]] bool IsMemoryMapped() const { return m_MemoryMapped; }
+
+        [[nodiscard]] bool CanOpenWith(int openMode) const;
+
+        ~FileControl();
+    private:
+        friend class Filesystem;
+
+        FileControl(class Filesystem& filesystem,
+                    Path virtualPath,
+                    Path physicalPath,
+                    int openMode);
+
+        /** Reference to parent filesystem */
+        class Filesystem& m_Filesystem;
+
+        /** Virtual path this file was initially opened with, mainly for debugging purposes */
+        const Path m_VirtualPath;
+
+        /** On-disk path of the file */
+        const Path m_PhysicalPath;
+
+        /** Size of the file */
+        std::atomic_size_t m_Size;
+
+        union
+        {
+            /** File pointer, used if m_MemoryMapped is false */
+            FILE* m_File;
+
+            /** Mapped memory, used if m_MemoryMapped is true */
+            void* m_Memory;
+        };
+
+        struct
+        {
+            bool m_Readable     : 1;
+            bool m_Writable     : 1;
+            bool m_MemoryMapped : 1;
+        };
+
+        /** Mutex to keep file operations from imploding when threaded */
+        mutable std::shared_mutex m_FileMutex;
+    };
+
+    /**
+     * Handle to an open file.
+     * The file is automatically closed when all handles go out of scope.
+     * Copy constructor is removed to prevent unintentional copies from being made.
+     */
+    class RUNTIME_API FileHandle
+    {
+    public:
+        FileHandle(FileHandle&&) = default;
+        ~FileHandle();
+
+        FileHandle(const FileHandle& handle) = delete;
+        void operator=(const FileHandle& handle) = delete;
+
+    private:
+        friend class Filesystem;
+
+        FileHandle(std::shared_ptr<FileControl>&& file);
+
+        std::shared_ptr<FileControl> m_File;
+        size_t m_Offset;
+    };
+
     class RUNTIME_API Filesystem
     {
     public:
-        struct RUNTIME_API FileBits
-        {
-            uint8_t Readable : 1;  // 1 if the file is readable
-            uint8_t Writable : 1;  // 1 if the file is writable
-        };
-
-        /**
-         * Control data for an open file
-         */
-        class RUNTIME_API FileControlBlock
-        {
-        public:
-            FileControlBlock(class Filesystem& fs, Path path, bool writable);
-            ~FileControlBlock();
-
-            [[nodiscard]] bool IsReadable() const noexcept { return m_Bits.Readable; }
-            [[nodiscard]] bool IsWritable() const noexcept { return m_Bits.Writable; }
-            [[nodiscard]] const Path& GetPhysicalPath() const noexcept { return m_PhysicalPath; }
-        private:
-            class Filesystem& m_Filesystem; // Parent filesystem
-            Path m_PhysicalPath; // Disk path for the file
-            FILE* m_File; // File pointer if relevant
-            FileBits m_Bits; // Status bits
-        };
-
-        using FcbPointer = std::shared_ptr<FileControlBlock>;
-
-        class RUNTIME_API FileHandle
-        {
-        public:
-            ~FileHandle();
-
-            [[nodiscard]] bool IsReadable() const noexcept { return m_Bits.Readable; }
-            [[nodiscard]] bool IsWritable() const noexcept { return m_Bits.Writable; }
-        private:
-            friend class Filesystem;
-
-            FileHandle(FcbPointer&& fcb, FileBits bits);
-
-            FcbPointer m_Fcb; // Pointer to file control block
-            std::size_t m_Offset; // File stream offset
-            FileBits m_Bits; // Status bits
-        };
-
         Filesystem(const Path& rootTarget);
         ~Filesystem();
 
-        FileHandle Open(const Path& path, bool writable = false);
+        /** File open modes */
+        enum OpenMode
+        {
+            /** Open a file only for reading */
+            ReadOnly,
+
+            /** Open a file for reading and writing, create if it doesn't exist */
+            ReadWrite,
+
+            /** Open a file for reading and writing, truncate if it exists */
+            WriteTruncate
+        };
+
+        /**
+         * Open a file with the specified mode
+         * @param path
+         * @param mode
+         * @return Handle to file
+         */
+        FileHandle Open(const Path& path, OpenMode mode = ReadOnly);
 
         /**
          * Mount a directory at the specified virtual path
@@ -127,7 +177,7 @@ namespace Exi::Runtime
         TL::LRUCache<std::string, Path> m_TranslationCache;
 
         std::shared_mutex m_FileMutex;
-        std::list<FcbPointer> m_FcbList;
+        std::list<std::shared_ptr<FileControl>> m_Files;
     };
 
 }
