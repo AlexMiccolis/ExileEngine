@@ -3,7 +3,7 @@
 
 Exi::Unit::BenchmarkResults Benchmark_Filesystem_TranslatePath()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
     Exi::Runtime::Path path;
 
     std::filesystem::create_directories("Test/1/2/3");

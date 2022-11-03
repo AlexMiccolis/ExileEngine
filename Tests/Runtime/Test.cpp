@@ -61,9 +61,31 @@ bool Test_PathUtils_StripSeparators()
     return true;
 }
 
+bool Test_Path_Constructor()
+{
+    Exi::Runtime::Path path1("///test//path/test.txt");
+    Exi::Runtime::Path path2("///test\\directory\\");
+    Exi::Runtime::Path path3("///test\\directory");
+    Exi::Runtime::Path path4("test/test.txt");
+
+    if (path1.AsString() != "/test/path/test.txt")
+        return false;
+    if (path2.AsString() != "/test/directory/")
+        return false;
+    if (path3.AsString() != "/test/directory")
+        return false;
+    if (path4.AsString() != "test/test.txt")
+        return false;
+
+    return path1.IsAbsolute() &&
+        path2.IsAbsolute() &&
+        path3.IsAbsolute() &&
+        !path4.IsAbsolute();
+}
+
 bool Test_Filesystem_MountDirectory()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
     std::filesystem::create_directories("Test/1/2/3");
 
     bool t1 = fs.MountDirectory("Test/1", "/Test1");
@@ -76,7 +98,7 @@ bool Test_Filesystem_MountDirectory()
 
 bool Test_Filesystem_TranslatePath()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path());
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
     std::filesystem::create_directories("Test/1/2/3");
 
     bool t1 = fs.MountDirectory("Test/1", "/Test1");
@@ -103,6 +125,20 @@ bool Test_Filesystem_TranslatePath()
     return true;
 }
 
+bool Test_Filesystem_Open()
+{
+    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
+    FILE* f = fopen("test.txt", "w");
+    fprintf(f, "Test!\n");
+    fclose(f);
+
+    auto handle1 = fs.Open("test.txt");
+    auto handle2 = fs.Open("test.txt");
+    auto handle3 = fs.Open("/test.txt");
+
+    return true;
+}
+
 int main(int argc, const char** argv)
 {
     Exi::Unit::Tests tests ({
@@ -110,8 +146,10 @@ int main(int argc, const char** argv)
         { "LuaContext_SetGlobalFunction", Test_LuaContext_SetGlobalFunction },
         { "PathUtils_GetNextFragment", Test_PathUtils_GetNextFragment },
         { "PathUtils_StripSeparators", Test_PathUtils_StripSeparators },
+        { "Path_Constructor", Test_Path_Constructor },
         { "Filesystem_MountDirectory", Test_Filesystem_MountDirectory },
         { "Filesystem_TranslatePath", Test_Filesystem_TranslatePath },
+        { "Filesystem_Open", Test_Filesystem_Open },
         { "Benchmark", Benchmark }
     });
 

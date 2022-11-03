@@ -6,6 +6,8 @@ add_test(NAME "[Runtime] LuaContext::ExecuteString"     COMMAND RuntimeTest LuaC
 add_test(NAME "[Runtime] LuaContext::SetGlobalFunction" COMMAND RuntimeTest LuaContext_SetGlobalFunction)
 add_test(NAME "[Runtime] PathUtils::GetNextFragment"    COMMAND RuntimeTest PathUtils_GetNextFragment)
 add_test(NAME "[Runtime] PathUtils::StripSeparators"    COMMAND RuntimeTest PathUtils_StripSeparators)
+add_test(NAME "[Runtime] Path::Path"                    COMMAND RuntimeTest Path_Constructor)
 add_test(NAME "[Runtime] Filesystem::MountDirectory"    COMMAND RuntimeTest Filesystem_MountDirectory)
 add_test(NAME "[Runtime] Filesystem::TranslatePath"     COMMAND RuntimeTest Filesystem_TranslatePath)
+add_test(NAME "[Runtime] Filesystem::Open"              COMMAND RuntimeTest Filesystem_Open)
 set_target_properties(RuntimeTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

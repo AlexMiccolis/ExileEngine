@@ -10,6 +10,7 @@ target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/Filesystem.hpp
         )
 target_sources(ExileRuntime PRIVATE
+        Path.cpp
         Logger.cpp
         LuaContext.cpp
         Filesystem.cpp

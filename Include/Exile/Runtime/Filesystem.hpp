@@ -1,83 +1,23 @@
 #pragma once
 
 #include <Exile/Runtime/API.hpp>
+#include <Exile/Runtime/Path.hpp>
 #include <Exile/Runtime/Logger.hpp>
 #include <Exile/TL/LRUCache.hpp>
+#include <list>
 #include <filesystem>
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 
 namespace Exi::Runtime
 {
 
-    using Path = std::filesystem::path;
-
-    namespace PathUtils
-    {
-
-        /**
-         * Find the first component in the given path, starting at `index`.
-         * @param path Path
-         * @param index Reference to index, used to store state across calls
-         * @return String view of fragment if found, empty string view otherwise
-         */
-        static inline std::string_view GetNextFragment(const std::string_view& path, std::size_t& index)
-        {
-            // Find first character that isn't a directory separator
-            std::size_t start = path.find_first_not_of("\\/", index);
-
-            // End of path
-            if (start == std::string::npos)
-                return { path.data() + path.length(), 0 };
-
-            // Loop until directory separator
-            for (index = start; index < path.length(); index++)
-            {
-                auto c = path[index];
-                if (c == '/' || c == '\\')
-                    break;
-            }
-
-            return { path.data() + start, index - start };
-        }
-
-        /**
-         * Return a view of the given string without leading or trailing
-         * directory separators.
-         * @param path
-         * @return String view
-         */
-        static inline std::string_view StripSeparators(const std::string_view& path)
-        {
-            std::size_t index = 0;
-            return GetNextFragment(path, index);
-        }
-
-        /**
-         * Split a path into a vector of fragments
-         * @param path
-         * @param fragmentsOut
-         * @return Number of fragments in the path
-         */
-        static inline int SplitPath(const std::string& path, std::vector<std::string_view>& fragmentsOut)
-        {
-            int count = 0;
-            std::size_t index = 0;
-            auto fragment = GetNextFragment(path, index);
-
-            fragmentsOut.reserve(16);
-            while (!fragment.empty())
-            {
-                fragmentsOut.push_back(fragment);
-                fragment = GetNextFragment(path, index);
-            }
-
-            return fragmentsOut.size();
-        }
-
-    }
-
+    /**
+     * Node within a Virtual Filesystem tree
+     */
     class RUNTIME_API VfsNode
     {
     public:
@@ -105,8 +45,54 @@ namespace Exi::Runtime
     class RUNTIME_API Filesystem
     {
     public:
+        struct RUNTIME_API FileBits
+        {
+            uint8_t Readable : 1;  // 1 if the file is readable
+            uint8_t Writable : 1;  // 1 if the file is writable
+        };
+
+        /**
+         * Control data for an open file
+         */
+        class RUNTIME_API FileControlBlock
+        {
+        public:
+            FileControlBlock(class Filesystem& fs, Path path, bool writable);
+            ~FileControlBlock();
+
+            [[nodiscard]] bool IsReadable() const noexcept { return m_Bits.Readable; }
+            [[nodiscard]] bool IsWritable() const noexcept { return m_Bits.Writable; }
+            [[nodiscard]] const Path& GetPhysicalPath() const noexcept { return m_PhysicalPath; }
+        private:
+            class Filesystem& m_Filesystem; // Parent filesystem
+            Path m_PhysicalPath; // Disk path for the file
+            FILE* m_File; // File pointer if relevant
+            FileBits m_Bits; // Status bits
+        };
+
+        using FcbPointer = std::shared_ptr<FileControlBlock>;
+
+        class RUNTIME_API FileHandle
+        {
+        public:
+            ~FileHandle();
+
+            [[nodiscard]] bool IsReadable() const noexcept { return m_Bits.Readable; }
+            [[nodiscard]] bool IsWritable() const noexcept { return m_Bits.Writable; }
+        private:
+            friend class Filesystem;
+
+            FileHandle(FcbPointer&& fcb, FileBits bits);
+
+            FcbPointer m_Fcb; // Pointer to file control block
+            std::size_t m_Offset; // File stream offset
+            FileBits m_Bits; // Status bits
+        };
+
         Filesystem(const Path& rootTarget);
         ~Filesystem();
+
+        FileHandle Open(const Path& path, bool writable = false);
 
         /**
          * Mount a directory at the specified virtual path
@@ -134,9 +120,14 @@ namespace Exi::Runtime
                            const std::vector<std::string_view>& fragments,
                            std::size_t& indexOut);
 
-        VfsNode m_Vfs;
         Logger& m_Logger;
+
+        std::shared_mutex m_VfsMutex;
+        VfsNode m_Vfs;
         TL::LRUCache<std::string, Path> m_TranslationCache;
+
+        std::shared_mutex m_FileMutex;
+        std::list<FcbPointer> m_FcbList;
     };
 
 }
