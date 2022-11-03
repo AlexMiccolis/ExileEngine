@@ -31,66 +31,7 @@ namespace Exi::Runtime
     }
     #pragma endregion
 
-    #pragma region File Control Block
-    FileControl::FileControl(class Filesystem& filesystem,
-                             Path virtualPath,
-                             Path physicalPath,
-                             int openMode)
-        : m_Filesystem(filesystem), m_VirtualPath(std::move(virtualPath)),
-          m_PhysicalPath(std::move(physicalPath)), m_Readable(false),
-          m_Writable(false), m_MemoryMapped(false)
-    {
-        const bool rw = (openMode == Filesystem::ReadWrite);
-        const bool trunc = (openMode == Filesystem::WriteTruncate);
-        const char* mode = "rb";
-
-        if (rw)
-            mode = "a+b";
-        else if (trunc)
-            mode = "w+b";
-
-        m_File = fopen(m_PhysicalPath.AsCString(), mode);
-        if (m_File == nullptr)
-            return;
-
-        m_Readable = true;
-        m_Writable = rw || trunc;
-
-        // TODO: 64-bit file offsets
-        fseek(m_File, 0, SEEK_END);
-        m_Size = ftell(m_File);
-        rewind(m_File);
-    }
-
-    FileControl::~FileControl()
-    {
-        if (!m_MemoryMapped && m_File != nullptr)
-            fclose(m_File);
-    }
-
-    bool FileControl::CanOpenWith(int openMode) const
-    {
-        if (openMode == Filesystem::ReadOnly)
-            return m_Readable;
-        return m_Readable && m_Writable;
-    }
-    #pragma endregion
-
-    #pragma region File Handle
-    FileHandle::FileHandle(std::shared_ptr<FileControl>&& file)
-        : m_File(std::move(file))
-    {
-
-    }
-
-    FileHandle::~FileHandle()
-    {
-
-    }
-    #pragma endregion
-
     #pragma region Filesystem
-
     Filesystem::Filesystem(const Path& rootTarget)
         : m_Vfs(VfsNode::DirectoryMount, "/", rootTarget.AsString()),
           m_Logger(Logger::GetLogger("Filesystem")), m_TranslationCache(1024)
@@ -105,7 +46,9 @@ namespace Exi::Runtime
 
     FileHandle Filesystem::Open(const Path& path, OpenMode mode)
     {
+        std::unique_lock lock(m_FileMutex);
         Path physicalPath;
+
         if (!TranslatePath(path, physicalPath))
             return { nullptr };
 
@@ -123,12 +66,21 @@ namespace Exi::Runtime
         }
         else
         {
-            if (!it->get()->CanOpenWith(mode))
+            fcb = *it;
+
+            if (mode == ReadWrite && fcb->GetOpenMode() == Read)
+            {
+                if (!fcb->ReopenAs(ReadWrite))
+                {
+                    m_Logger.Error("Failed to re-open '%s' as read/write", physicalPath.AsCString());
+                    return { nullptr };
+                }
+            }
+            else if (!fcb->CanOpenWith(mode))
             {
                 m_Logger.Warn("Attempted to open read-only file '%s' as writable", physicalPath.AsCString());
                 return { nullptr };
             }
-            fcb = *it;
         }
 
         return { std::move(fcb) };
@@ -219,6 +171,6 @@ namespace Exi::Runtime
 
         return *node;
     }
+    #pragma endregion
 
-#pragma endregion
 }

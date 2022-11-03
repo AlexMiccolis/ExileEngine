@@ -1,6 +1,7 @@
 #include <Exile/Unit/Test.hpp>
 #include <Exile/Runtime/LuaContext.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
+#include <filesystem>
 
 extern bool Benchmark();
 
@@ -129,14 +130,13 @@ bool Test_Filesystem_Open()
 {
     Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
     FILE* f = fopen("test.txt", "w");
-    fprintf(f, "Test!\n");
+    fprintf(f, "Test!");
     fclose(f);
 
     auto handle1 = fs.Open("test.txt");
-    auto handle2 = fs.Open("test.txt");
-    auto handle3 = fs.Open("/test.txt");
+    auto handle2 = fs.Open("test.txt", fs.ReadWrite);
 
-    return true;
+    return handle1 && handle2;
 }
 
 int main(int argc, const char** argv)

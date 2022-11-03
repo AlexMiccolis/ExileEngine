@@ -14,6 +14,8 @@ target_sources(ExileRuntime PRIVATE
         Logger.cpp
         LuaContext.cpp
         Filesystem.cpp
+        FileHandle.cpp
+        FileControl.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
 set_target_properties(ExileRuntime PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

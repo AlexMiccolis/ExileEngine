@@ -5,12 +5,14 @@
 #include <Exile/Runtime/Logger.hpp>
 #include <Exile/TL/LRUCache.hpp>
 #include <cstddef>
+#include <concepts>
 #include <list>
 #include <string>
 #include <memory>
 #include <atomic>
 #include <mutex>
 #include <shared_mutex>
+#include <cassert>
 
 namespace Exi::Runtime
 {
@@ -50,17 +52,44 @@ namespace Exi::Runtime
         [[nodiscard]] bool IsOpen() const { return m_Readable; }
         [[nodiscard]] bool IsWritable() const { return m_Writable; }
         [[nodiscard]] bool IsMemoryMapped() const { return m_MemoryMapped; }
+        [[nodiscard]] int GetOpenMode() const { return m_OpenMode; }
 
         [[nodiscard]] bool CanOpenWith(int openMode) const;
+
+        /**
+         * Read `count` bytes from the file handle's offset into `buffer`.
+         * @param handle File handle
+         * @param count Number of bytes to read
+         * @param buffer Destination buffer
+         * @return Number of bytes read
+         */
+        std::size_t ReadBytes(class FileHandle& handle, std::size_t count, void* buffer);
+
+        /**
+         * Write `count` bytes from `buffer` to the file at the handle's offset
+         * @param handle File handle
+         * @param count Number of bytes to write
+         * @param buffer Source buffer
+         * @return Number of bytes written
+         */
+        std::size_t WriteBytes(class FileHandle& handle, std::size_t count, const void* buffer);
 
         ~FileControl();
     private:
         friend class Filesystem;
 
+        static constexpr const char* s_Read = "rb";
+        static constexpr const char* s_ReadWrite = "r+b";
+        static constexpr const char* s_WriteTruncate = "w+b";
+
+        static const char* OpenModeToString(int openMode);
+
         FileControl(class Filesystem& filesystem,
                     Path virtualPath,
                     Path physicalPath,
                     int openMode);
+
+        bool ReopenAs(int openMode);
 
         /** Reference to parent filesystem */
         class Filesystem& m_Filesystem;
@@ -70,6 +99,9 @@ namespace Exi::Runtime
 
         /** On-disk path of the file */
         const Path m_PhysicalPath;
+
+        /** Last OpenMode of file */
+        int m_OpenMode;
 
         /** Size of the file */
         std::atomic_size_t m_Size;
@@ -85,13 +117,13 @@ namespace Exi::Runtime
 
         struct
         {
-            bool m_Readable     : 1;
-            bool m_Writable     : 1;
-            bool m_MemoryMapped : 1;
+            bool m_Readable     : 1 = false;
+            bool m_Writable     : 1 = false;
+            bool m_MemoryMapped : 1 = false;
         };
 
         /** Mutex to keep file operations from imploding when threaded */
-        mutable std::shared_mutex m_FileMutex;
+        mutable std::shared_mutex m_Mutex;
     };
 
     /**
@@ -105,16 +137,56 @@ namespace Exi::Runtime
         FileHandle(FileHandle&&) = default;
         ~FileHandle();
 
+        [[nodiscard]] size_t GetOffset() const { return m_Offset; }
+        [[nodiscard]] bool EndOfFile() const { return m_EndOfFile; }
+        [[nodiscard]] bool IsValid() const { return m_Valid; }
+
+        /**
+         * Read a trivially copyable type and increase the internal offset by its size
+         * @tparam T
+         * @param out
+         * @return True if the value was read, false otherwise
+         */
+        template <typename T> requires std::is_trivially_copyable_v<T>
+        bool Read(T& out)
+        {
+            assert(m_Valid);
+            auto bytes = m_File->ReadBytes(*this, sizeof(T), &out);
+            m_Offset += bytes;
+            return !m_EndOfFile;
+        }
+
+        /**
+         * Write a trivially copyable type and increase the internal offset by its size
+         * @tparam T
+         * @param val
+         * @return True if the value was written, false otherwise
+         */
+        template <typename T> requires std::is_trivially_copyable_v<T>
+        bool Write(const T& val)
+        {
+            assert(m_Valid);
+            auto bytes = m_File->WriteBytes(*this, sizeof(T), &val);
+            m_Offset += bytes;
+            return bytes == sizeof(T);
+        }
+
+        explicit operator bool() const { return m_Valid; }
+
         FileHandle(const FileHandle& handle) = delete;
         void operator=(const FileHandle& handle) = delete;
 
     private:
         friend class Filesystem;
+        friend class FileControl;
 
         FileHandle(std::shared_ptr<FileControl>&& file);
+        void SetEof(bool eof);
 
         std::shared_ptr<FileControl> m_File;
-        size_t m_Offset;
+        size_t m_Offset = 0;
+        bool m_EndOfFile = false;
+        bool m_Valid = false;
     };
 
     class RUNTIME_API Filesystem
@@ -126,10 +198,16 @@ namespace Exi::Runtime
         /** File open modes */
         enum OpenMode
         {
-            /** Open a file only for reading */
+            /**
+             * Open a file for reading, but allow it to be promoted
+             * to ReadWrite or demoted to ReadOnly access if necessary
+             */
+            Read,
+
+            /** Open a file only for reading, do not allow it to be promoted to ReadWrite */
             ReadOnly,
 
-            /** Open a file for reading and writing, create if it doesn't exist */
+            /** Open a file for reading and writing only if it exists */
             ReadWrite,
 
             /** Open a file for reading and writing, truncate if it exists */
@@ -142,7 +220,7 @@ namespace Exi::Runtime
          * @param mode
          * @return Handle to file
          */
-        FileHandle Open(const Path& path, OpenMode mode = ReadOnly);
+        FileHandle Open(const Path& path, OpenMode mode = Read);
 
         /**
          * Mount a directory at the specified virtual path
