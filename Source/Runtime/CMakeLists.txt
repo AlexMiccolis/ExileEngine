@@ -10,12 +10,12 @@ target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/Filesystem.hpp
         )
 target_sources(ExileRuntime PRIVATE
-        Path.cpp
+        Filesystem/Path.cpp
         Logger.cpp
         LuaContext.cpp
-        Filesystem.cpp
-        FileHandle.cpp
-        FileControl.cpp
+        Filesystem/Filesystem.cpp
+        Filesystem/FileHandle.cpp
+        Filesystem/FileControl.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
 set_target_properties(ExileRuntime PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
