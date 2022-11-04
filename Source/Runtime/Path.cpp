@@ -32,4 +32,48 @@ namespace Exi::Runtime
         }
     }
 
+    std::string Path::GetExtension() const
+    {
+        auto file = GetFile();
+
+        if (file.empty())
+            return file;
+
+        auto ext = file.find_first_of('.');
+        if (ext == std::string::npos || ext == file.length() - 1)
+            return { };
+
+        return { file, ext + 1 };
+    }
+
+    std::string Path::GetFileName() const
+    {
+        auto file = GetFile();
+
+        if (file.empty())
+            return file;
+
+        auto ext = file.find_first_of('.');
+        if (ext == 0)
+            return { };
+        else if (ext == std::string::npos)
+            return file;
+
+        return { file, 0, ext };
+    }
+
+    std::string Path::GetFile() const
+    {
+        constexpr char chars[] = { DirectorySeparator, AltDirectorySeparator, 0 };
+        auto lastSeparator = m_Path.find_last_of(chars);
+
+        if (lastSeparator == (m_Path.length() - 1))
+            return { };
+
+        if (lastSeparator == std::string::npos)
+            lastSeparator = 0;
+
+        return { m_Path, lastSeparator + 1 };
+    }
+
 }

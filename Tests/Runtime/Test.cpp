@@ -85,6 +85,49 @@ bool Test_Path_Constructor()
         !path4.IsAbsolute();
 }
 
+bool Test_Path_GetFile()
+{
+    auto file1 = Exi::Runtime::Path("///test//path/test.txt").GetFile();
+    auto file2 = Exi::Runtime::Path("///test\\directory\\").GetFile();
+    auto file3 = Exi::Runtime::Path("///test\\directory").GetFile();
+    auto file4 = Exi::Runtime::Path("test/test.txt").GetFile();
+
+    return file1 == "test.txt" &&
+        file2.empty() &&
+        file3 == "directory" &&
+        file4 == "test.txt";
+}
+
+bool Test_Path_GetExtension()
+{
+    auto ext1 = Exi::Runtime::Path("///test//path/test.txt").GetExtension();
+    auto ext2 = Exi::Runtime::Path("///test\\.dotfile").GetExtension();
+    auto ext3 = Exi::Runtime::Path("///test\\file.").GetExtension();
+    auto ext4 = Exi::Runtime::Path("test/directory").GetExtension();
+    auto ext5 = Exi::Runtime::Path("test/test.txt").GetExtension();
+
+    return ext1 == "txt" &&
+        ext2 == "dotfile" &&
+        ext3.empty() &&
+        ext4.empty() &&
+        ext5 == "txt";
+}
+
+bool Test_Path_GetFileName()
+{
+    auto ext1 = Exi::Runtime::Path("///test//path/test.txt").GetFileName();
+    auto ext2 = Exi::Runtime::Path("///test\\.dotfile").GetFileName();
+    auto ext3 = Exi::Runtime::Path("///test\\file.").GetFileName();
+    auto ext4 = Exi::Runtime::Path("test/directory").GetFileName();
+    auto ext5 = Exi::Runtime::Path("test/test.txt").GetFileName();
+
+    return ext1 == "test" &&
+           ext2.empty() &&
+           ext3 == "file" &&
+           ext4 == "directory" &&
+           ext5 == "test";
+}
+
 bool Test_Filesystem_MountDirectory()
 {
     Exi::Runtime::Filesystem fs;
@@ -181,6 +224,9 @@ int main(int argc, const char** argv)
         { "PathUtils_GetNextFragment", Test_PathUtils_GetNextFragment },
         { "PathUtils_StripSeparators", Test_PathUtils_StripSeparators },
         { "Path_Constructor", Test_Path_Constructor },
+        { "Path_GetFile", Test_Path_GetFile },
+        { "Path_GetFileName", Test_Path_GetFileName },
+        { "Path_GetExtension", Test_Path_GetExtension },
         { "Filesystem_MountDirectory", Test_Filesystem_MountDirectory },
         { "Filesystem_TranslatePath", Test_Filesystem_TranslatePath },
         { "Filesystem_Open", Test_Filesystem_Open },

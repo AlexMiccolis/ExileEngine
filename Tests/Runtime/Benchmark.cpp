@@ -24,9 +24,20 @@ Exi::Unit::BenchmarkResults Benchmark_Filesystem_TranslatePath()
     return BENCHMARK_END(Filesystem_TranslatePath);
 }
 
+Exi::Unit::BenchmarkResults Benchmark_Path_Constructor()
+{
+    BENCHMARK_START(Path_Constructor, 65536);
+    BENCHMARK_LOOP(Path_Constructor)
+    {
+        Exi::Runtime::Path path("dir/1/2/3/test.bin");
+    }
+    return BENCHMARK_END(Path_Constructor);
+}
+
 bool Benchmark()
 {
     Exi::Unit::RunBenchmark("Filesystem::TranslatePath", Benchmark_Filesystem_TranslatePath);
+    Exi::Unit::RunBenchmark("Path::Path", Benchmark_Path_Constructor);
 
     return true;
 }

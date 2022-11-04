@@ -82,6 +82,26 @@ namespace Exi::Runtime
         Path(const std::string_view& path) : Path(std::string(path)) { }
         Path(const char* path) : Path(std::string(path)) { }
 
+        /**
+         * Retrieve the file extension
+         * @return File extension or empty string view if there is none
+         */
+        [[nodiscard]] std::string GetExtension() const;
+
+        /**
+         * Retrieve the file name without the extension
+         * @return File name or empty string view if there is none
+         */
+        [[nodiscard]] std::string GetFileName() const;
+
+        /**
+         * Retrieve the file name, including the extension
+         * @return File name or empty string view if there is none
+         */
+        [[nodiscard]] std::string GetFile() const;
+
+
+
         [[nodiscard]] bool IsAbsolute() const noexcept { return m_Attributes.Absolute; }
 
         [[nodiscard]] const std::string& AsString() const noexcept { return m_Path; }
