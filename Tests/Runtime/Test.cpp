@@ -115,6 +115,9 @@ bool Test_Filesystem_TranslatePath()
     bool xlt2 = fs.TranslatePath("Test1/Test2/test.txt", path2);
     bool xlt3 = fs.TranslatePath("Test1/Test2/Test3/test.txt", path3);
 
+    if (!(xlt1 && xlt2 && xlt3))
+        return false;
+
     if (path1 != "Test/1/test.txt")
         return false;
 
