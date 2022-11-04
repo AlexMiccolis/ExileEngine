@@ -54,9 +54,8 @@ namespace Exi::Runtime
          * @param fragmentsOut
          * @return Number of fragments in the path
          */
-        static inline int SplitPath(const std::string& path, std::vector<std::string_view>& fragmentsOut)
+        static inline std::size_t SplitPath(const std::string& path, std::vector<std::string_view>& fragmentsOut)
         {
-            int count = 0;
             std::size_t index = 0;
             auto fragment = GetNextFragment(path, index);
 
@@ -78,7 +77,7 @@ namespace Exi::Runtime
         static constexpr char DirectorySeparator = '/';
         static constexpr char AltDirectorySeparator = '\\';
 
-        Path();
+        Path() = default;
         Path(const std::string& path);
         Path(const std::string_view& path) : Path(std::string(path)) { }
         Path(const char* path) : Path(std::string(path)) { }
@@ -113,11 +112,11 @@ namespace Exi::Runtime
         { return !(a.m_Path == b.m_Path); }
     private:
         std::string m_Path; // Path string
-        uint32_t m_Fragments; // Number of fragments in path
+        uint32_t m_Fragments = 0; // Number of fragments in path
         struct
         {
             uint32_t Absolute : 1; // 1 if the path is absolute
-        } m_Attributes;
+        } m_Attributes = { };
     };
 
 }

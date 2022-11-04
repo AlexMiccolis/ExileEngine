@@ -3,14 +3,11 @@
 namespace Exi::Runtime
 {
 
-    Path::Path()
-    {
-
-    }
-
     Path::Path(const std::string& path)
-        : m_Attributes { }
     {
+        if (path.empty())
+            return;
+
         std::vector<std::string_view> fragments;
         m_Fragments = PathUtils::SplitPath(path, fragments);
         m_Path.reserve(path.size());

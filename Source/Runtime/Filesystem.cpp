@@ -32,9 +32,15 @@ namespace Exi::Runtime
     #pragma endregion
 
     #pragma region Filesystem
-    Filesystem::Filesystem(const Path& rootTarget)
-        : m_Vfs(VfsNode::DirectoryMount, "/", rootTarget.AsString()),
+    Filesystem::Filesystem(const Path& rootDirectory)
+        : m_Vfs(VfsNode::DirectoryMount, "/", rootDirectory.AsString()),
           m_Logger(Logger::GetLogger("Filesystem")), m_TranslationCache(1024)
+    {
+
+    }
+
+    Filesystem::Filesystem()
+        : Filesystem(std::filesystem::current_path().string())
     {
 
     }
@@ -50,7 +56,7 @@ namespace Exi::Runtime
         Path physicalPath;
 
         if (!TranslatePath(path, physicalPath))
-            return { nullptr };
+            return { };
 
         // Find an FCB with a matching path
         auto it = std::find_if(m_Files.begin(), m_Files.end(),
@@ -73,17 +79,17 @@ namespace Exi::Runtime
                 if (!fcb->ReopenAs(ReadWrite))
                 {
                     m_Logger.Error("Failed to re-open '%s' as read/write", physicalPath.AsCString());
-                    return { nullptr };
+                    return { };
                 }
             }
             else if (!fcb->CanOpenWith(mode))
             {
                 m_Logger.Warn("Attempted to open read-only file '%s' as writable", physicalPath.AsCString());
-                return { nullptr };
+                return { };
             }
         }
 
-        return { std::move(fcb) };
+        return FileHandle(std::move(fcb));
     }
 
     bool Filesystem::MountDirectory(const Path& directory, const Path& virtualPath)
@@ -99,6 +105,8 @@ namespace Exi::Runtime
         std::vector<std::string_view> fragments;
         PathUtils::SplitPath(path, fragments);
 
+        // Get exclusive access to the VFS because we're about to modify it
+        std::unique_lock vfsLock(m_VfsMutex);
         std::size_t endIndex;
         VfsNode& endNode = MatchPath(path, fragments, endIndex);
 
@@ -117,6 +125,7 @@ namespace Exi::Runtime
 
     bool Filesystem::TranslatePath(const Path& virtualPath, Path& physicalPath)
     {
+        std::unique_lock cacheLock(m_CacheMutex);
         const auto& path = virtualPath.AsString();
 
         if (m_TranslationCache.Contains(path))
@@ -131,18 +140,14 @@ namespace Exi::Runtime
         std::size_t endIndex;
         VfsNode& endNode = MatchPath(path, fragments, endIndex);
 
-        /*
-        std::size_t startIndex;
-        VfsNode& endNode = LastMatchingNode(path, startIndex);
-        */
-
         physicalPath = endNode.GetTarget();
+        if (physicalPath.AsString().empty())
+            return false;
+
         for (std::size_t i = endIndex; i < fragments.size(); i++)
         {
             physicalPath /= fragments[i];
         }
-
-        //physicalPath = endNode.GetTarget() + path.substr(startIndex);
 
         m_TranslationCache.Put(path, physicalPath);
         return true;

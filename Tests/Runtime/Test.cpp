@@ -2,6 +2,7 @@
 #include <Exile/Runtime/LuaContext.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
 #include <filesystem>
+#include <thread>
 
 extern bool Benchmark();
 
@@ -86,7 +87,7 @@ bool Test_Path_Constructor()
 
 bool Test_Filesystem_MountDirectory()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
+    Exi::Runtime::Filesystem fs;
     std::filesystem::create_directories("Test/1/2/3");
 
     bool t1 = fs.MountDirectory("Test/1", "/Test1");
@@ -99,7 +100,7 @@ bool Test_Filesystem_MountDirectory()
 
 bool Test_Filesystem_TranslatePath()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
+    Exi::Runtime::Filesystem fs;
     std::filesystem::create_directories("Test/1/2/3");
 
     bool t1 = fs.MountDirectory("Test/1", "/Test1");
@@ -128,7 +129,7 @@ bool Test_Filesystem_TranslatePath()
 
 bool Test_Filesystem_Open()
 {
-    Exi::Runtime::Filesystem fs(std::filesystem::current_path().string());
+    Exi::Runtime::Filesystem fs;
     FILE* f = fopen("test.txt", "w");
     fprintf(f, "Test!");
     fclose(f);
@@ -137,6 +138,36 @@ bool Test_Filesystem_Open()
     auto handle2 = fs.Open("test.txt", fs.ReadWrite);
 
     return handle1 && handle2;
+}
+
+bool Test_Threaded_Filesystem_Open()
+{
+    Exi::Runtime::Filesystem fs;
+    FILE* f = fopen("test.txt", "w");
+    fprintf(f, "Test!");
+    fclose(f);
+
+    const auto n = std::thread::hardware_concurrency();
+    assert(n != 0);
+
+    std::vector<std::thread> threads;
+    std::array<int, 128> threadStatus = { 0 }; // Each thread only writes to their own assigned slot
+    bool status = true;
+
+    for (unsigned int i = 0; i < n; i++)
+        threads.emplace_back([&, i]{
+            auto handle = fs.Open("test.txt", fs.ReadOnly);
+            threadStatus[i] = handle.IsValid();
+        });
+
+    for (unsigned int i = 0; i < n; i++)
+    {
+        threads[i].join();
+        if (!threadStatus[i])
+            status = false;
+    }
+
+    return status;
 }
 
 int main(int argc, const char** argv)
@@ -150,6 +181,7 @@ int main(int argc, const char** argv)
         { "Filesystem_MountDirectory", Test_Filesystem_MountDirectory },
         { "Filesystem_TranslatePath", Test_Filesystem_TranslatePath },
         { "Filesystem_Open", Test_Filesystem_Open },
+        { "Threaded_Filesystem_Open", Test_Threaded_Filesystem_Open },
         { "Benchmark", Benchmark }
     });
 

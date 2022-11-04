@@ -180,7 +180,8 @@ namespace Exi::Runtime
         friend class Filesystem;
         friend class FileControl;
 
-        FileHandle(std::shared_ptr<FileControl>&& file);
+        FileHandle();
+        explicit FileHandle(std::shared_ptr<FileControl>&& file);
         void SetEof(bool eof);
 
         std::shared_ptr<FileControl> m_File;
@@ -192,7 +193,8 @@ namespace Exi::Runtime
     class RUNTIME_API Filesystem
     {
     public:
-        Filesystem(const Path& rootTarget);
+        explicit Filesystem(const Path& rootDirectory);
+        Filesystem();
         ~Filesystem();
 
         /** File open modes */
@@ -252,6 +254,8 @@ namespace Exi::Runtime
 
         std::shared_mutex m_VfsMutex;
         VfsNode m_Vfs;
+
+        std::mutex m_CacheMutex;
         TL::LRUCache<std::string, Path> m_TranslationCache;
 
         std::shared_mutex m_FileMutex;

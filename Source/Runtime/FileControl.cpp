@@ -46,6 +46,12 @@ namespace Exi::Runtime
         rewind(m_File);
     }
 
+    FileControl::~FileControl()
+    {
+        if (!m_MemoryMapped && m_Readable)
+            fclose(m_File);
+    }
+
     bool FileControl::ReopenAs(int openMode)
     {
         std::unique_lock lock(m_Mutex);
@@ -61,12 +67,6 @@ namespace Exi::Runtime
             m_OpenMode = openMode;
         }
         return true;
-    }
-
-    FileControl::~FileControl()
-    {
-        if (!m_MemoryMapped && m_Readable)
-            fclose(m_File);
     }
 
     bool FileControl::CanOpenWith(int openMode) const
@@ -103,8 +103,13 @@ namespace Exi::Runtime
         std::size_t bytes = 0;
         if (m_Readable && !m_MemoryMapped)
         {
-            fseek(m_File, static_cast<long>(handle.GetOffset()), SEEK_SET);
+            auto offset = static_cast<long>(handle.GetOffset());
+
+            fseek(m_File, offset, SEEK_SET);
             bytes = fwrite(buffer, 1, count, m_File);
+
+            if (offset + bytes > m_Size)
+                m_Size += (offset + bytes) - m_Size;
         }
         return bytes;
     }
