@@ -216,6 +216,50 @@ bool Test_Threaded_Filesystem_Open()
     return status;
 }
 
+bool Test_FileHandle_Read()
+{
+    const std::string testString = "Test!";
+    Exi::Runtime::Filesystem fs;
+    FILE* f = fopen("test.txt", "w");
+    fputs(testString.c_str(), f);
+    fclose(f);
+
+    auto readHandle = fs.Open("test.txt");
+    if (!readHandle)
+        return false;
+
+    char c;
+    std::string readString;
+    while (readHandle.Read(c))
+        readString.push_back(c);
+
+    return readString == testString;
+}
+
+bool Test_FileHandle_Write()
+{
+    const std::string testString = "Test!";
+    Exi::Runtime::Filesystem fs;
+
+    auto writeHandle = fs.Open("test.txt", Exi::Runtime::Filesystem::WriteTruncate);
+    if (!writeHandle)
+        return false;
+    for (char c : testString)
+        if (!writeHandle.Write(c))
+            return false;
+
+    auto readHandle = fs.Open("test.txt");
+    if (!readHandle)
+        return false;
+
+    char c;
+    std::string readString;
+    while (readHandle.Read(c))
+        readString.push_back(c);
+
+    return readString == testString;
+}
+
 int main(int argc, const char** argv)
 {
     Exi::Unit::Tests tests ({
@@ -231,6 +275,8 @@ int main(int argc, const char** argv)
         { "Filesystem_TranslatePath", Test_Filesystem_TranslatePath },
         { "Filesystem_Open", Test_Filesystem_Open },
         { "Threaded_Filesystem_Open", Test_Threaded_Filesystem_Open },
+        { "FileHandle_Read", Test_FileHandle_Read },
+        { "FileHandle_Write", Test_FileHandle_Write },
         { "Benchmark", Benchmark }
     });
 

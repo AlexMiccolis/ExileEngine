@@ -137,9 +137,29 @@ namespace Exi::Runtime
         FileHandle(FileHandle&&) = default;
         ~FileHandle();
 
+        void SetOffset(size_t offset) { m_Offset = offset; }
         [[nodiscard]] size_t GetOffset() const { return m_Offset; }
         [[nodiscard]] bool EndOfFile() const { return m_EndOfFile; }
         [[nodiscard]] bool IsValid() const { return m_Valid; }
+        [[nodiscard]] size_t GetSize() const;
+
+        /**
+         * Read `count` bytes from the current offset into `buffer`.
+         * Increases offset by number of bytes read
+         * @param count
+         * @param buffer
+         * @return Number of bytes read
+         */
+        std::size_t ReadBytes(std::size_t count, void* buffer);
+
+        /**
+         * Write `count` bytes from `buffer` to the current offset.
+         * Increases offset by `count`
+         * @param count
+         * @param buffer
+         * @return Number of bytes written
+         */
+        std::size_t WriteBytes(std::size_t count, const void* buffer);
 
         /**
          * Read a trivially copyable type and increase the internal offset by its size
@@ -150,10 +170,7 @@ namespace Exi::Runtime
         template <typename T> requires std::is_trivially_copyable_v<T>
         bool Read(T& out)
         {
-            assert(m_Valid);
-            auto bytes = m_File->ReadBytes(*this, sizeof(T), &out);
-            m_Offset += bytes;
-            return !m_EndOfFile;
+            return (ReadBytes(sizeof(T), &out) == sizeof(T)) && !m_EndOfFile;
         }
 
         /**
@@ -165,10 +182,7 @@ namespace Exi::Runtime
         template <typename T> requires std::is_trivially_copyable_v<T>
         bool Write(const T& val)
         {
-            assert(m_Valid);
-            auto bytes = m_File->WriteBytes(*this, sizeof(T), &val);
-            m_Offset += bytes;
-            return bytes == sizeof(T);
+            return WriteBytes(sizeof(T), &val) == sizeof(T);
         }
 
         explicit operator bool() const { return m_Valid; }

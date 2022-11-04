@@ -14,4 +14,6 @@ add_test(NAME "[Runtime] Filesystem::MountDirectory"    COMMAND RuntimeTest File
 add_test(NAME "[Runtime] Filesystem::TranslatePath"     COMMAND RuntimeTest Filesystem_TranslatePath)
 add_test(NAME "[Runtime] Filesystem::Open"              COMMAND RuntimeTest Filesystem_Open)
 add_test(NAME "[Runtime] Filesystem::Open (Threads)"    COMMAND RuntimeTest Threaded_Filesystem_Open)
+add_test(NAME "[Runtime] FileHandle::Read"              COMMAND RuntimeTest FileHandle_Read)
+add_test(NAME "[Runtime] FileHandle::Write"             COMMAND RuntimeTest FileHandle_Write)
 set_target_properties(RuntimeTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
