@@ -185,6 +185,22 @@ namespace Exi::Runtime
             return WriteBytes(sizeof(T), &val) == sizeof(T);
         }
 
+        /**
+         * Read the content of the file into a string, starting at the current offset.
+         * If the content of the file is not valid text, the string may contain invalid
+         * characters or null bytes. User discretion is advised.
+         * @param length Number of bytes to read, if 0 then reads the rest of the file.
+         * @return File content as string
+         */
+        std::string ReadString(std::size_t length = 0);
+
+        /**
+         * Write a string at the current offset
+         * @param str String to write
+         * @return True if successful, false otherwise
+         */
+        bool WriteString(const std::string& str);
+
         explicit operator bool() const { return m_Valid; }
 
         FileHandle(const FileHandle& handle) = delete;

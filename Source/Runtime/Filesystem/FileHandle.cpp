@@ -41,6 +41,23 @@ namespace Exi::Runtime
         return bytes;
     }
 
+    std::string FileHandle::ReadString(std::size_t length)
+    {
+        const auto size = (length == 0) ? (GetSize() - m_Offset) : std::min(GetSize(), length);
+        std::string str;
+
+        str.resize(size);
+        ReadBytes(size, str.data());
+
+        return str;
+    }
+
+    bool FileHandle::WriteString(const std::string& str)
+    {
+        auto written = WriteBytes(str.length(), str.data());
+        return written == str.length();
+    }
+
     void FileHandle::SetEof(bool eof)
     {
         m_EndOfFile = eof;
