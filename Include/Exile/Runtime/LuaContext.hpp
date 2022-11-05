@@ -11,9 +11,10 @@ namespace Exi::Runtime
     class RUNTIME_API LuaContext
     {
     public:
+        static constexpr const char* ApiTable = "Exi";
         using LuaFn = int(*)(LuaContext&);
 
-        LuaContext();
+        explicit LuaContext(class Filesystem& filesystem);
         ~LuaContext();
 
     #pragma region Code Import/Export
@@ -24,6 +25,13 @@ namespace Exi::Runtime
          * @return True if successful, false otherwise
          */
         bool ExecuteString(const std::string& str);
+
+        /**
+         * Rea
+         * @param bytecode
+         * @return
+         */
+        bool ExecuteBytecode(const std::vector<uint8_t>& bytecode, const std::string& chunkName = "Compiled Chunk");
 
         /**
          * Compile a string of Lua code into a vector of bytecode
@@ -63,13 +71,43 @@ namespace Exi::Runtime
         void Push(const double& value);
         void Push(const char* value);
         void Push(const std::string& value);
+        void Push(LuaFn value);
 
     #pragma endregion
 
+    #pragma region Table Manipulation
+        using TableIndex = int;
+
+        TableIndex NewTable();
+        void SetField(TableIndex table, const std::string& name);
+
+        template <typename T>
+        void SetField(TableIndex table, const std::string& name, T value)
+        {
+            Push(value);
+            SetField(table, name);
+        }
+    #pragma endregion
+
+    #pragma region GC Functions
+        /**
+         * Get the amount of memory used by this Lua context in kilobytes
+         * @return Kilobytes used
+         */
+        [[nodiscard]] std::size_t GetMemory() const;
+
+        void StepGc();
+        void CollectGc();
+    #pragma endregion
+
     private:
+        void PopulateApiTables();
+
+        static int ExiClass(LuaContext& lua);
         static int LuaFnWrapper(lua_State* lua);
 
         lua_State* m_Lua;
+        class Filesystem& m_Filesystem;
     };
 
 }

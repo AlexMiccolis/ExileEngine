@@ -12,7 +12,7 @@ target_sources(ExileRuntime PUBLIC
 target_sources(ExileRuntime PRIVATE
         Filesystem/Path.cpp
         Logger.cpp
-        LuaContext.cpp
+        Lua/LuaContext.cpp
         Filesystem/Filesystem.cpp
         Filesystem/FileHandle.cpp
         Filesystem/FileControl.cpp
