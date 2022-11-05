@@ -18,5 +18,6 @@ target_sources(ExileRuntime PRIVATE
         Filesystem/FileControl.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
+set_target_properties(ExileRuntime PROPERTIES OUTPUT_NAME "ExiRT")
 set_target_properties(ExileRuntime PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set_target_properties(ExileRuntime PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
