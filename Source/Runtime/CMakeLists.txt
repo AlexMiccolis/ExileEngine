@@ -6,16 +6,22 @@ target_include_directories(ExileRuntime PUBLIC ${PROJECT_SOURCE_DIR}/Include)
 target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/API.hpp
         ${INCLUDE_SUBDIR}/Logger.hpp
-        ${INCLUDE_SUBDIR}/LuaState.hpp
+        ${INCLUDE_SUBDIR}/Lua.hpp
+        ${INCLUDE_SUBDIR}/Lua/LuaState.hpp
         ${INCLUDE_SUBDIR}/Filesystem.hpp
+        ${INCLUDE_SUBDIR}/Filesystem/Path.hpp
+        ${INCLUDE_SUBDIR}/Reflection.hpp
+        ${INCLUDE_SUBDIR}/Reflection/Types.hpp
+        ${INCLUDE_SUBDIR}/Reflection/Class.hpp
         )
 target_sources(ExileRuntime PRIVATE
-        Filesystem/Path.cpp
         Logger.cpp
         Lua/LuaState.cpp
+        Filesystem/Path.cpp
         Filesystem/Filesystem.cpp
         Filesystem/FileHandle.cpp
         Filesystem/FileControl.cpp
+        Reflection/Class.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
 set_target_properties(ExileRuntime PROPERTIES OUTPUT_NAME "ExiRT")
