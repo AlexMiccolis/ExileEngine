@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+#include <utility>
 #include <cstdint>
 #include <random>
 #include <string>
