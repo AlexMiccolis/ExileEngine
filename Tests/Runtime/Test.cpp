@@ -1,5 +1,5 @@
 #include <Exile/Unit/Test.hpp>
-#include <Exile/Runtime/LuaContext.hpp>
+#include <Exile/Runtime/LuaState.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
 #include <filesystem>
 #include <thread>
@@ -242,43 +242,10 @@ bool Test_FileHandle_Write()
     return readString == testString;
 }
 
-bool Test_LuaContext_ExecuteString()
+bool Test_LuaState_Execute()
 {
-    Exi::Runtime::Filesystem fs;
-    Exi::Runtime::LuaContext lua(fs);
-    return lua.ExecuteString("print('Hello from LuaContext::ExecuteString()')");
-}
-
-static int my_global(Exi::Runtime::LuaContext& lua)
-{
-    lua.Push("Hello from a global Lua function");
-    return 1;
-}
-
-bool Test_LuaContext_SetGlobalFunction()
-{
-    Exi::Runtime::Filesystem fs;
-    Exi::Runtime::LuaContext lua(fs);
-    lua.SetGlobalFunction("my_global", my_global);
-    return lua.ExecuteString("print(my_global())");
-}
-
-bool Test_LuaContext_CompileFile()
-{
-    Exi::Runtime::Filesystem fs;
-    Exi::Runtime::LuaContext lua(fs);
-    std::vector<uint8_t> bytecode;
-
-    auto file = fs.Open("test.lua", Exi::Runtime::Filesystem::WriteTruncate);
-    file.WriteString("print(Exi.Class())");
-
-    if(!lua.CompileFile("test.lua", bytecode))
-        return false;
-
-    if(!lua.ExecuteBytecode(bytecode))
-        return false;
-
-    return true;
+    Exi::Runtime::LuaState lua;
+    return lua.Execute("print('Hello from LuaState::Execute()')");
 }
 
 int main(int argc, const char** argv)
@@ -296,9 +263,7 @@ int main(int argc, const char** argv)
         { "Threaded_Filesystem_Open", Test_Threaded_Filesystem_Open },
         { "FileHandle_Read", Test_FileHandle_Read },
         { "FileHandle_Write", Test_FileHandle_Write },
-        { "LuaContext_ExecuteString", Test_LuaContext_ExecuteString },
-        { "LuaContext_SetGlobalFunction", Test_LuaContext_SetGlobalFunction },
-        { "LuaContext_CompileFile", Test_LuaContext_CompileFile },
+        { "LuaState_Execute", Test_LuaState_Execute },
         { "Benchmark", Benchmark }
     });
 
