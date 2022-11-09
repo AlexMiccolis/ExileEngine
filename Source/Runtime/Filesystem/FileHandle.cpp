@@ -8,7 +8,7 @@ namespace Exi::Runtime
         : m_File(nullptr), m_Valid(false) { }
 
     FileHandle::FileHandle(std::shared_ptr<FileControl>&& file)
-        : m_File(std::move(file)), m_Valid(m_File)
+        : m_File(std::move(file)), m_Valid(m_File && m_File->IsOpen())
     {
 
     }
