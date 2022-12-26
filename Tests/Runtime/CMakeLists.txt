@@ -14,5 +14,6 @@ add_test(NAME "[Runtime] Filesystem::Open"              COMMAND RuntimeTest File
 add_test(NAME "[Runtime] Filesystem::Open (Threads)"    COMMAND RuntimeTest Threaded_Filesystem_Open)
 add_test(NAME "[Runtime] FileHandle::Read"              COMMAND RuntimeTest FileHandle_Read)
 add_test(NAME "[Runtime] FileHandle::Write"             COMMAND RuntimeTest FileHandle_Write)
+add_test(NAME "[Runtime] Class::FindMethod"             COMMAND RuntimeTest Class_FindMethod)
 add_test(NAME "[Runtime] LuaState::Execute"             COMMAND RuntimeTest LuaState_Execute)
 set_target_properties(RuntimeTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

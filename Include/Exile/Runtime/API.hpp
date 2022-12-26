@@ -17,6 +17,11 @@
     #endif
 #endif
 
+/** Macro to delete copy constructors and define a default noexcept move constructor */
+#define EXI_NO_COPY(ClassName) ClassName(const ClassName&) = delete; \
+    void operator=(const ClassName&) = delete; \
+    ClassName(ClassName&&) noexcept = default;
+
 namespace Exi::Runtime
 {
 

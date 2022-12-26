@@ -13,6 +13,8 @@ target_sources(ExileRuntime PUBLIC
         ${INCLUDE_SUBDIR}/Reflection.hpp
         ${INCLUDE_SUBDIR}/Reflection/Types.hpp
         ${INCLUDE_SUBDIR}/Reflection/Class.hpp
+        ${INCLUDE_SUBDIR}/Reflection/Field.hpp
+        ${INCLUDE_SUBDIR}/Reflection/Method.hpp
         )
 target_sources(ExileRuntime PRIVATE
         Logger.cpp
@@ -22,6 +24,8 @@ target_sources(ExileRuntime PRIVATE
         Filesystem/FileHandle.cpp
         Filesystem/FileControl.cpp
         Reflection/Class.cpp
+        Reflection/Field.cpp
+        Reflection/Method.cpp
         )
 set_target_properties(ExileRuntime PROPERTIES PREFIX "")
 set_target_properties(ExileRuntime PROPERTIES OUTPUT_NAME "ExiRT")

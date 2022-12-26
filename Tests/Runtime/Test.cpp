@@ -1,6 +1,7 @@
 #include <Exile/Unit/Test.hpp>
-#include "Exile/Runtime/Lua/LuaState.hpp"
+#include <Exile/Runtime/Lua.hpp>
 #include <Exile/Runtime/Filesystem.hpp>
+#include <Exile/Runtime/Reflection.hpp>
 #include <filesystem>
 #include <thread>
 #include <cstring>
@@ -242,6 +243,19 @@ bool Test_FileHandle_Write()
     return readString == testString;
 }
 
+bool Test_Class_FindMethod()
+{
+    Exi::Runtime::Class cls("NativeClass", Exi::Runtime::Native);
+
+    auto& m1 = cls.AddMethod("TestMethod1");
+    auto& m2 = cls.AddMethod("TestMethod2");
+
+    auto p1 = cls.FindMethod("TestMethod2");
+    auto p2 = cls.FindMethod("TestMethod3");
+
+    return (p1 == &m2) && (p2 == nullptr);
+}
+
 bool Test_LuaState_Execute()
 {
     Exi::Runtime::LuaState lua;
@@ -263,6 +277,7 @@ int main(int argc, const char** argv)
         { "Threaded_Filesystem_Open", Test_Threaded_Filesystem_Open },
         { "FileHandle_Read", Test_FileHandle_Read },
         { "FileHandle_Write", Test_FileHandle_Write },
+        { "Class_FindMethod", Test_Class_FindMethod },
         { "LuaState_Execute", Test_LuaState_Execute },
         { "Benchmark", Benchmark }
     });
